@@ -1,0 +1,46 @@
+﻿@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  font-family: 'Public Sans', 'Segoe UI', sans-serif;
+  color: #0f172a;
+  background-color: #f4f8f7;
+}
+
+body {
+  margin: 0;
+  min-width: 320px;
+  background:
+    radial-gradient(circle at 15% 15%, #d8fae6 0%, transparent 25%),
+    radial-gradient(circle at 85% 5%, #d8eefe 0%, transparent 30%),
+    linear-gradient(180deg, #f7fcfb 0%, #f0f7f6 100%);
+}
+
+* {
+  box-sizing: border-box;
+}
+
+.confetti {
+  position: absolute;
+  top: -12px;
+  width: 8px;
+  height: 14px;
+  border-radius: 99px;
+  background: linear-gradient(180deg, #10b981 0%, #0ea5e9 100%);
+  animation: confetti-fall 2.4s linear infinite;
+}
+
+@keyframes confetti-fall {
+  0% {
+    transform: translateY(-10px) rotate(0deg);
+    opacity: 0;
+  }
+  15% {
+    opacity: 1;
+  }
+  100% {
+    transform: translateY(360px) rotate(280deg);
+    opacity: 0;
+  }
+}

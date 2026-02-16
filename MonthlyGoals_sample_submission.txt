@@ -1,0 +1,43 @@
+﻿NCSY Monthly Goals Submission
+Region: Midwest
+Chapter: Chicago
+Staff: Alex Taylor
+Window: 2026-03, 2026-04
+Submitted: Feb 16, 2026, 10:30 AM
+
+2026-03
+- Events Hosted: 6 (Reasons: Seasonality)
+- New Teens Engaged: 24 (Reasons: Community event)
+- Average Attendance: 27
+- Retention Contacts: 62 (Reasons: Staffing change) (Note: New part-time coordinator starts mid-month)
+
+2026-04
+- Events Hosted: 8 (Reasons: Special program)
+- New Teens Engaged: 28
+- Average Attendance: 30
+- Retention Contacts: 74
+
+---TECH (do not edit)---
+{
+  "submissionId": "58e0c6a7-2e01-48af-bf61-4fd6531a6f27",
+  "createdAtIso": "2026-02-16T16:30:00.000Z",
+  "region": "Midwest",
+  "chapter": "Chicago",
+  "staff": "Alex Taylor",
+  "months": ["2026-03", "2026-04"],
+  "metricsByMonth": {
+    "2026-03": [
+      { "key": "events", "label": "Events Hosted", "goalValue": 6, "reasons": ["Seasonality"], "note": "" },
+      { "key": "new_teens", "label": "New Teens Engaged", "goalValue": 24, "reasons": ["Community event"], "note": "" },
+      { "key": "avg_attendance", "label": "Average Attendance", "goalValue": 27, "reasons": [], "note": "" },
+      { "key": "retention_contacts", "label": "Retention Contacts", "goalValue": 62, "reasons": ["Staffing change"], "note": "New part-time coordinator starts mid-month" }
+    ],
+    "2026-04": [
+      { "key": "events", "label": "Events Hosted", "goalValue": 8, "reasons": ["Special program"], "note": "" },
+      { "key": "new_teens", "label": "New Teens Engaged", "goalValue": 28, "reasons": [], "note": "" },
+      { "key": "avg_attendance", "label": "Average Attendance", "goalValue": 30, "reasons": [], "note": "" },
+      { "key": "retention_contacts", "label": "Retention Contacts", "goalValue": 74, "reasons": [], "note": "" }
+    ]
+  },
+  "appVersion": "1.0.0"
+}
