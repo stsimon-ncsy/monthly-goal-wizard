@@ -451,9 +451,6 @@ export default function App() {
                       <p className="text-sm text-slate-700">
                         Typical for {currentMonth.label}: avg <strong>{Math.round(stats.avg)}</strong> (range {Math.round(stats.min)}-{Math.round(stats.max)}) from last {stats.countYears} years.
                       </p>
-                      <div className="mt-2">
-                        <RangeBar avg={stats.avg} max={stats.max} min={stats.min} />
-                      </div>
                     </>
                   ) : (
                     <p className="text-sm text-slate-700">No history available for this chapter-use your best estimate.</p>
@@ -477,7 +474,8 @@ export default function App() {
                     value={goalValue ?? ''}
                     onChange={(event) => {
                       const value = event.currentTarget.value.trim();
-                      updateGoal(currentMonth.key, metric.key, value === '' ? null : Number(value));
+                      const parsed = Number(value);
+                      updateGoal(currentMonth.key, metric.key, value === '' || Number.isNaN(parsed) ? null : parsed);
                     }}
                   />
                   <button
@@ -497,6 +495,19 @@ export default function App() {
                       Use avg
                     </button>
                   )}
+                </div>
+                <div className="mt-3 rounded-xl border border-slate-200 bg-white p-3">
+                  <p className="mb-2 text-xs font-medium uppercase tracking-wide text-slate-600">Drag to set goal</p>
+                  <RangeBar
+                    goalMin={metric.goalMin}
+                    hasHistory={stats.hasHistory}
+                    historyAvg={stats.avg}
+                    historyMax={stats.max}
+                    historyMin={stats.min}
+                    onChange={(next) => updateGoal(currentMonth.key, metric.key, next)}
+                    suggestedMax={metric.suggestedMax}
+                    value={goalValue ?? metric.goalMin}
+                  />
                 </div>
 
                 <div className="mt-4">

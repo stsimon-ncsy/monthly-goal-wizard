@@ -31,6 +31,42 @@ body {
   animation: confetti-fall 2.4s linear infinite;
 }
 
+.range-slider {
+  appearance: none;
+}
+
+.range-slider::-webkit-slider-runnable-track {
+  height: 8px;
+  background: transparent;
+}
+
+.range-slider::-webkit-slider-thumb {
+  appearance: none;
+  margin-top: -6px;
+  height: 20px;
+  width: 20px;
+  border-radius: 999px;
+  border: 2px solid #ffffff;
+  background: #0f766e;
+  box-shadow: 0 2px 8px rgba(15, 23, 42, 0.25);
+  cursor: grab;
+}
+
+.range-slider::-moz-range-track {
+  height: 8px;
+  background: transparent;
+}
+
+.range-slider::-moz-range-thumb {
+  height: 20px;
+  width: 20px;
+  border-radius: 999px;
+  border: 2px solid #ffffff;
+  background: #0f766e;
+  box-shadow: 0 2px 8px rgba(15, 23, 42, 0.25);
+  cursor: grab;
+}
+
 @keyframes confetti-fall {
   0% {
     transform: translateY(-10px) rotate(0deg);
