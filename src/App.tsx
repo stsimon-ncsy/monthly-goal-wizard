@@ -49,6 +49,19 @@ function defaultGoals(months: MonthRef[], region: string, chapter: string, histo
   return output;
 }
 
+function defaultTouched(months: MonthRef[]): Record<string, Record<string, boolean>> {
+  const output: Record<string, Record<string, boolean>> = {};
+
+  for (const month of months) {
+    output[month.key] = {};
+    for (const metric of appConfig.metrics) {
+      output[month.key][metric.key] = false;
+    }
+  }
+
+  return output;
+}
+
 export default function App() {
   const profile = useMemo(() => loadProfile(), []);
   const [history, setHistory] = useState<HistoryRow[]>([]);
@@ -59,6 +72,7 @@ export default function App() {
   const [months, setMonths] = useState<MonthRef[]>(getMonthWindow(true));
   const [identifySnapshot, setIdentifySnapshot] = useState<IdentifyFormValues | null>(null);
   const [goals, setGoals] = useState<GoalsByMonth>({});
+  const [goalTouched, setGoalTouched] = useState<Record<string, Record<string, boolean>>>({});
   const [expandedReasons, setExpandedReasons] = useState<Record<string, boolean>>({});
   const [expandedMetricInfo, setExpandedMetricInfo] = useState<Record<string, boolean>>({});
   const [draftKey, setDraftKey] = useState('');
@@ -150,12 +164,14 @@ export default function App() {
   const monthReady = useMemo(() => {
     if (!currentMonth) return false;
     const monthGoals = goals[currentMonth.key];
+    const monthTouched = goalTouched[currentMonth.key];
     if (!monthGoals) return false;
+    if (!monthTouched) return false;
     return appConfig.metrics.every((metric) => {
       const value = monthGoals[metric.key]?.goalValue;
-      return Number.isFinite(value) && (value ?? -1) >= metric.goalMin;
+      return Number.isFinite(value) && (value ?? -1) >= metric.goalMin && monthTouched[metric.key] === true;
     });
-  }, [currentMonth, goals]);
+  }, [currentMonth, goalTouched, goals]);
 
   const lastYearEventsForMonth = useMemo(() => {
     if (!currentMonth || !identifySnapshot) return [];
@@ -201,6 +217,7 @@ export default function App() {
     setIdentifySnapshot(cleaned);
     setMonths(monthWindow);
     setGoals(initialized);
+    setGoalTouched(defaultTouched(monthWindow));
     setGoalMonthIndex(0);
     setDraftKey(nextDraftKey);
     setScreen('goals');
@@ -226,6 +243,13 @@ export default function App() {
           ...prev[monthKey]?.[metricKey],
           goalValue: value,
         },
+      },
+    }));
+    setGoalTouched((prev) => ({
+      ...prev,
+      [monthKey]: {
+        ...(prev[monthKey] ?? {}),
+        [metricKey]: true,
       },
     }));
   }
@@ -304,18 +328,19 @@ export default function App() {
 
     const subject = `Monthly Goals ${months.map((month) => month.key).join(', ')} – ${identifySnapshot.staffName} (${identifySnapshot.region})`;
     let body = submissionBlock.full;
+    const isMobile = /Android|iPhone|iPad|iPod|Mobile/i.test(navigator.userAgent);
+
+    if (isMobile) {
+      const mailtoUrl = `mailto:?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
+      window.location.href = mailtoUrl;
+      return;
+    }
 
     if (body.length > 1500) {
       body = `${submissionBlock.humanOnly}\n\nTech payload omitted in email due to length. Attach the downloaded .txt file.`;
       triggerTextDownload(submissionFilename, submissionBlock.full);
     }
     const outlookUrl = `https://outlook.office.com/mail/deeplink/compose?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
-    const mailtoUrl = `mailto:?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
-    const isMobile = /Android|iPhone|iPad|iPod|Mobile/i.test(navigator.userAgent);
-    if (isMobile) {
-      window.location.href = mailtoUrl;
-      return;
-    }
     window.location.href = outlookUrl;
   }
 
@@ -334,6 +359,7 @@ export default function App() {
     clearDraft(draftKey);
     const refreshed = defaultGoals(months, identifySnapshot.region, identifySnapshot.chapter ?? '', history);
     setGoals(refreshed);
+    setGoalTouched(defaultTouched(months));
     setToast('Draft cleared');
   }
 
