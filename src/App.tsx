@@ -581,13 +581,19 @@ export default function App() {
                       +
                     </button>
                   </div>
-                  {stats.hasHistory && goalValue !== roundGoal(stats.avg) && (
+                  {stats.hasHistory && (
                     <button
-                      className="mt-2 rounded-lg border border-emerald-200 bg-emerald-50 px-2 py-1.5 text-xs text-emerald-900"
+                      className={clsx(
+                        'mt-2 rounded-lg border px-2 py-1.5 text-xs',
+                        goalValue !== roundGoal(stats.avg)
+                          ? 'border-emerald-200 bg-emerald-50 text-emerald-900'
+                          : 'border-slate-200 bg-slate-100 text-slate-500',
+                      )}
+                      disabled={goalValue === roundGoal(stats.avg)}
                       onClick={() => updateGoal(currentMonth.key, metric.key, roundGoal(stats.avg))}
                       type="button"
                     >
-                      Use avg
+                      {goalValue === roundGoal(stats.avg) ? 'Using avg' : 'Use avg'}
                     </button>
                   )}
 
