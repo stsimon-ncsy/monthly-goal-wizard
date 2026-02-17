@@ -21,7 +21,7 @@ const identifySchema = z.object({
 });
 
 type IdentifyFormValues = z.infer<typeof identifySchema>;
-type Screen = 'welcome' | 'identify' | 'goals' | 'review' | 'submit';
+type Screen = 'welcome' | 'identify' | 'goals' | 'review';
 
 function defaultGoals(months: MonthRef[], region: string, chapter: string, history: HistoryRow[]): GoalsByMonth {
   const output: GoalsByMonth = {};
@@ -77,8 +77,6 @@ export default function App() {
   const [expandedMetricInfo, setExpandedMetricInfo] = useState<Record<string, boolean>>({});
   const [draftKey, setDraftKey] = useState('');
   const [toast, setToast] = useState('');
-  const [submissionBlock, setSubmissionBlock] = useState<{ full: string; humanOnly: string; receiptLine: string } | null>(null);
-  const [submissionFilename, setSubmissionFilename] = useState('MonthlyGoals_Submission.txt');
 
   useEffect(() => {
     loadHistory()
@@ -173,6 +171,17 @@ export default function App() {
     });
   }, [currentMonth, goalTouched, goals]);
 
+  const remainingGoalsToTouch = useMemo(() => {
+    if (!currentMonth) return appConfig.metrics.length;
+    const monthGoals = goals[currentMonth.key];
+    const monthTouched = goalTouched[currentMonth.key];
+    if (!monthGoals || !monthTouched) return appConfig.metrics.length;
+    return appConfig.metrics.filter((metric) => {
+      const value = monthGoals[metric.key]?.goalValue;
+      return !(Number.isFinite(value) && (value ?? -1) >= metric.goalMin && monthTouched[metric.key] === true);
+    }).length;
+  }, [currentMonth, goalTouched, goals]);
+
   const lastYearEventsForMonth = useMemo(() => {
     if (!currentMonth || !identifySnapshot) return [];
     return eventHistory
@@ -187,6 +196,25 @@ export default function App() {
       new Date(currentMonth.year - 1, currentMonth.month - 1, 1),
     );
   }, [currentMonth]);
+
+  const reviewSubmission = useMemo(() => {
+    if (!identifySnapshot) return null;
+    const createdAt = new Date();
+    const payload = buildSubmissionPayload({
+      submissionId: uuidv4(),
+      createdAt,
+      region: identifySnapshot.region,
+      chapter: identifySnapshot.chapter ?? '',
+      staff: identifySnapshot.staffName,
+      months,
+      goals,
+    });
+
+    return {
+      block: buildSubmissionBlock({ payload, createdAt }),
+      filename: buildSubmissionFilename(payload),
+    };
+  }, [goals, identifySnapshot, months]);
 
   function applyIdentify(values: IdentifyFormValues): void {
     const region = lockRegion ? lockedRegion : values.region;
@@ -285,49 +313,30 @@ export default function App() {
     }));
   }
 
-  function openSubmit(): void {
-    if (!identifySnapshot) return;
-
-    const createdAt = new Date();
-    const payload = buildSubmissionPayload({
-      submissionId: uuidv4(),
-      createdAt,
-      region: identifySnapshot.region,
-      chapter: identifySnapshot.chapter ?? '',
-      staff: identifySnapshot.staffName,
-      months,
-      goals,
-    });
-
-    setSubmissionFilename(buildSubmissionFilename(payload));
-    setSubmissionBlock(buildSubmissionBlock({ payload, createdAt }));
-    setScreen('submit');
-  }
-
   function onCopySubmission(): void {
-    if (!submissionBlock) return;
-    navigator.clipboard.writeText(submissionBlock.full).then(() => {
+    if (!reviewSubmission) return;
+    navigator.clipboard.writeText(reviewSubmission.block.full).then(() => {
       setToast('Copied — now paste into your Teams message/email');
     });
   }
 
   function onCopyReceipt(): void {
-    if (!submissionBlock) return;
-    navigator.clipboard.writeText(submissionBlock.receiptLine).then(() => {
+    if (!reviewSubmission) return;
+    navigator.clipboard.writeText(reviewSubmission.block.receiptLine).then(() => {
       setToast('Receipt line copied');
     });
   }
 
   function onDownloadSubmission(): void {
-    if (!submissionBlock) return;
-    triggerTextDownload(submissionFilename, submissionBlock.full);
+    if (!reviewSubmission) return;
+    triggerTextDownload(reviewSubmission.filename, reviewSubmission.block.full);
   }
 
   function onEmailSubmission(): void {
-    if (!submissionBlock || !identifySnapshot) return;
+    if (!reviewSubmission || !identifySnapshot) return;
 
     const subject = `Monthly Goals ${months.map((month) => month.key).join(', ')} – ${identifySnapshot.staffName} (${identifySnapshot.region})`;
-    let body = submissionBlock.full;
+    const body = reviewSubmission.block.full;
     const isMobile = /Android|iPhone|iPad|iPod|Mobile/i.test(navigator.userAgent);
 
     if (isMobile) {
@@ -336,12 +345,11 @@ export default function App() {
       return;
     }
 
-    if (body.length > 1500) {
-      body = `${submissionBlock.humanOnly}\n\nTech payload omitted in email due to length. Attach the downloaded .txt file.`;
-      triggerTextDownload(submissionFilename, submissionBlock.full);
-    }
     const outlookUrl = `https://outlook.office.com/mail/deeplink/compose?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
-    window.location.href = outlookUrl;
+    const popup = window.open(outlookUrl, '_blank', 'noopener,noreferrer');
+    if (!popup) {
+      window.location.href = outlookUrl;
+    }
   }
 
   function toggleReasons(monthKey: string, metricKey: string): void {
@@ -691,6 +699,11 @@ export default function App() {
               Next
             </button>
           </div>
+          {!monthReady && (
+            <p className="text-sm text-amber-700">
+              Next is disabled: interact with all {appConfig.metrics.length} goals and set valid values. Remaining: {remainingGoalsToTouch}.
+            </p>
+          )}
         </section>
       )}
 
@@ -742,30 +755,12 @@ export default function App() {
             <button className="rounded-lg px-4 py-2 text-slate-700" onClick={() => setScreen('goals')} type="button">
               Back
             </button>
-            <button className="rounded-lg bg-emerald-600 px-4 py-2 font-semibold text-white" onClick={openSubmit} type="button">
-              Continue to Submit
-            </button>
-          </div>
-        </section>
-      )}
-
-      {screen === 'submit' && submissionBlock && (
-        <section className="relative overflow-hidden rounded-2xl border border-emerald-200 bg-gradient-to-br from-emerald-50 to-teal-50 p-4 shadow-sm sm:p-6">
-          <div className="pointer-events-none absolute inset-0 opacity-60">
-            {Array.from({ length: 16 }).map((_, index) => (
-              <span
-                className="confetti"
-                key={`confetti-${index}`}
-                style={{ left: `${(index + 1) * 6}%`, animationDelay: `${index * 0.08}s` }}
-              />
-            ))}
           </div>
 
-          <div className="relative">
-            <h2 className="text-lg font-semibold text-slate-900">Last step: submit your goals</h2>
-            <p className="mt-1 text-sm text-slate-700">Choose one of the options below.</p>
-
-            <div className="mt-4 grid gap-2 sm:grid-cols-3">
+          <div className="mt-4 rounded-2xl border border-emerald-200 bg-emerald-50/60 p-4">
+            <h3 className="text-base font-semibold text-slate-900">Submit your goals</h3>
+            <p className="mt-1 text-sm text-slate-700">Use any option below. Email opens in a new window on desktop.</p>
+            <div className="mt-3 grid gap-2 sm:grid-cols-3">
               <button className="rounded-lg bg-emerald-600 px-4 py-3 font-semibold text-white" onClick={onCopySubmission} type="button">
                 Copy submission
               </button>
@@ -783,16 +778,10 @@ export default function App() {
               </button>
             </div>
 
-            <label className="mt-4 block text-sm font-medium text-slate-700">
+            <label className="mt-3 block text-sm font-medium text-slate-700">
               Submission preview
-              <textarea className="mt-1 h-48 w-full rounded-lg border border-slate-300 bg-white p-3 text-xs" readOnly value={submissionBlock.full} />
+              <textarea className="mt-1 h-48 w-full rounded-lg border border-slate-300 bg-white p-3 text-xs" readOnly value={reviewSubmission?.block.full ?? ''} />
             </label>
-
-            <div className="mt-3 flex justify-start">
-              <button className="rounded-lg px-4 py-2 text-slate-700" onClick={() => setScreen('review')} type="button">
-                Back
-              </button>
-            </div>
           </div>
         </section>
       )}
