@@ -23,6 +23,13 @@ const identifySchema = z.object({
 type IdentifyFormValues = z.infer<typeof identifySchema>;
 type Screen = 'welcome' | 'identify' | 'goals' | 'review';
 
+const metricPalettes = [
+  { cardBg: '#eefcf6', panelBg: '#def7ec', border: '#a7f3d0', accent: '#0f766e', accentSoft: '#6ee7b7', accentStrong: '#065f46' },
+  { cardBg: '#eef7ff', panelBg: '#dbeafe', border: '#93c5fd', accent: '#1d4ed8', accentSoft: '#93c5fd', accentStrong: '#1e3a8a' },
+  { cardBg: '#fff7ed', panelBg: '#ffedd5', border: '#fdba74', accent: '#c2410c', accentSoft: '#fdba74', accentStrong: '#9a3412' },
+  { cardBg: '#fdf2f8', panelBg: '#fce7f3', border: '#f9a8d4', accent: '#be185d', accentSoft: '#f9a8d4', accentStrong: '#9d174d' },
+];
+
 function defaultGoals(months: MonthRef[], region: string, chapter: string, history: HistoryRow[]): GoalsByMonth {
   const output: GoalsByMonth = {};
 
@@ -498,8 +505,9 @@ export default function App() {
           </div>
 
           <div className="grid grid-cols-2 gap-3">
-            {appConfig.metrics.map((metric) => {
+            {appConfig.metrics.map((metric, metricIndex) => {
               const draft = goals[currentMonth.key]?.[metric.key];
+              const palette = metricPalettes[metricIndex % metricPalettes.length];
               const stats = computeMetricStats({
                 history,
                 region: identifySnapshot.region,
@@ -514,13 +522,14 @@ export default function App() {
               const goalValue = draft?.goalValue;
 
               return (
-                <article className="rounded-2xl border border-slate-200 bg-white p-3 shadow-sm" key={metric.key}>
+                <article className="rounded-2xl border p-3 shadow-sm" key={metric.key} style={{ backgroundColor: palette.cardBg, borderColor: palette.border }}>
                   <div className="flex items-start justify-between gap-2">
-                    <h3 className="text-base font-semibold leading-tight text-slate-900">
+                    <h3 className="text-base font-semibold leading-tight" style={{ color: palette.accentStrong }}>
                       {metric.label}
                       <button
                         aria-label={`What is ${metric.label}?`}
-                        className="ml-1 inline-flex h-5 w-5 items-center justify-center rounded-full border border-slate-300 text-[11px] font-bold text-slate-600"
+                        className="ml-1 inline-flex h-5 w-5 items-center justify-center rounded-full border text-[11px] font-bold"
+                        style={{ borderColor: palette.border, color: palette.accent }}
                         onClick={() => toggleMetricInfo(currentMonth.key, metric.key)}
                         type="button"
                       >
@@ -539,9 +548,9 @@ export default function App() {
                       {stats.variability}
                     </span>
                   </div>
-                  {infoOpen && <p className="mt-1 text-xs text-slate-600">{metric.description}</p>}
+                  {infoOpen && <p className="mt-1 text-xs" style={{ color: palette.accent }}>{metric.description}</p>}
 
-                  <div className="mt-2 rounded-xl bg-slate-50 p-2.5">
+                  <div className="mt-2 rounded-xl p-2.5" style={{ backgroundColor: palette.panelBg }}>
                     {stats.hasHistory ? (
                       <p className="text-sm text-slate-700">
                         Avg <strong>{Math.round(stats.avg)}</strong> | Range {Math.round(stats.min)}-{Math.round(stats.max)} ({stats.countYears}y)
@@ -554,7 +563,8 @@ export default function App() {
                   <div className="mt-3 grid grid-cols-[2.25rem_minmax(0,1fr)_2.25rem] items-center gap-1.5">
                     <button
                       aria-label={`Decrease ${metric.label}`}
-                      className="h-9 w-9 rounded-lg border border-slate-300 text-base"
+                      className="h-9 w-9 rounded-lg border text-base"
+                      style={{ borderColor: palette.border, color: palette.accentStrong }}
                       onClick={() => updateGoal(currentMonth.key, metric.key, Math.max(metric.goalMin, (goalValue ?? metric.goalMin) - 1))}
                       type="button"
                     >
@@ -562,7 +572,8 @@ export default function App() {
                     </button>
                     <input
                       aria-label={`${metric.label} goal`}
-                      className="h-11 w-full min-w-0 rounded-lg border border-slate-300 px-2 text-center text-xl font-semibold"
+                      className="h-11 w-full min-w-0 rounded-lg border px-2 text-center text-xl font-semibold"
+                      style={{ borderColor: palette.border, color: palette.accentStrong }}
                       inputMode="numeric"
                       pattern="[0-9]*"
                       value={goalValue ?? ''}
@@ -574,24 +585,26 @@ export default function App() {
                     />
                     <button
                       aria-label={`Increase ${metric.label}`}
-                      className="h-9 w-9 rounded-lg border border-slate-300 text-base"
+                      className="h-9 w-9 rounded-lg border text-base"
+                      style={{ borderColor: palette.border, color: palette.accentStrong }}
                       onClick={() => updateGoal(currentMonth.key, metric.key, (goalValue ?? metric.goalMin) + 1)}
                       type="button"
                     >
                       +
                     </button>
                   </div>
-                  <div className="mt-2 rounded-xl border border-slate-200 bg-white p-2.5">
+                  <div className="mt-2 rounded-xl border bg-white/80 p-2.5" style={{ borderColor: palette.border }}>
                     <div className="mb-1.5 flex items-center justify-between gap-2">
-                      <p className="text-xs font-semibold uppercase tracking-wide text-slate-700">Drag to set goal</p>
+                      <p className="text-xs font-semibold uppercase tracking-wide" style={{ color: palette.accentStrong }}>Drag to set goal</p>
                       {stats.hasHistory && (
                         <button
                           className={clsx(
                             'rounded-lg border px-2 py-1 text-[11px]',
                             goalValue !== roundGoal(stats.avg)
-                              ? 'border-emerald-200 bg-emerald-50 text-emerald-900'
+                              ? 'text-white'
                               : 'border-slate-200 bg-slate-100 text-slate-500',
                           )}
+                          style={goalValue !== roundGoal(stats.avg) ? { borderColor: palette.accent, backgroundColor: palette.accent } : undefined}
                           disabled={goalValue === roundGoal(stats.avg)}
                           onClick={() => updateGoal(currentMonth.key, metric.key, roundGoal(stats.avg))}
                           type="button"
@@ -606,6 +619,9 @@ export default function App() {
                       historyAvg={stats.avg}
                       historyMax={stats.max}
                       historyMin={stats.min}
+                      accentColor={palette.accent}
+                      accentSoftColor={palette.accentSoft}
+                      accentStrongColor={palette.accentStrong}
                       onChange={(next) => updateGoal(currentMonth.key, metric.key, next)}
                       value={goalValue ?? metric.goalMin}
                     />

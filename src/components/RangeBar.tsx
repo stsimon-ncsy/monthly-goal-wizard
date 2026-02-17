@@ -1,5 +1,3 @@
-import clsx from 'clsx';
-
 type Props = {
   goalMin: number;
   value: number;
@@ -8,6 +6,9 @@ type Props = {
   historyMin: number;
   historyMax: number;
   historyAvg: number;
+  accentColor: string;
+  accentSoftColor: string;
+  accentStrongColor: string;
 };
 
 function clamp(value: number, min: number, max: number): number {
@@ -22,6 +23,9 @@ export function RangeBar({
   historyMin,
   historyMax,
   historyAvg,
+  accentColor,
+  accentSoftColor,
+  accentStrongColor,
 }: Props) {
   const historySpan = hasHistory ? Math.max(1, historyMax - historyMin) : 1;
   const scaleMin = hasHistory ? Math.max(goalMin, Math.floor(historyMin - historySpan * 0.35)) : goalMin;
@@ -47,23 +51,23 @@ export function RangeBar({
 
         {hasHistory && (
           <div
-            className="absolute top-1/2 h-3 -translate-y-1/2 rounded-full bg-emerald-300/90"
-            style={{ left: `${historyLeft}%`, width: `${Math.max(2, historyRight - historyLeft)}%` }}
+            className="absolute top-1/2 h-3 -translate-y-1/2 rounded-full"
+            style={{ left: `${historyLeft}%`, width: `${Math.max(2, historyRight - historyLeft)}%`, backgroundColor: accentSoftColor }}
             title={`Historical range: ${Math.round(historyMin)}-${Math.round(historyMax)}`}
           />
         )}
 
         {hasHistory && (
           <div
-            className="absolute top-1/2 h-4 w-0.5 -translate-y-1/2 bg-slate-800"
-            style={{ left: `${avgPct}%` }}
+            className="absolute top-1/2 h-4 w-0.5 -translate-y-1/2"
+            style={{ left: `${avgPct}%`, backgroundColor: accentStrongColor }}
             title={`Historical avg: ${Math.round(historyAvg)}`}
           />
         )}
 
         <div
-          className={clsx('absolute -top-1 rounded-md px-2 py-0.5 text-xs font-semibold text-white', hasHistory ? 'bg-emerald-700' : 'bg-slate-700')}
-          style={{ left: `calc(${clamp(currentPct, 4, 96)}% - 13px)` }}
+          className="absolute -top-1 rounded-md px-2 py-0.5 text-xs font-semibold text-white"
+          style={{ left: `calc(${clamp(currentPct, 4, 96)}% - 13px)`, backgroundColor: hasHistory ? accentColor : '#334155' }}
         >
           {safeValue}
         </div>
@@ -71,6 +75,7 @@ export function RangeBar({
         <input
           aria-label="Drag to set goal"
           className="range-slider absolute left-0 right-0 top-1/2 h-10 -translate-y-1/2 bg-transparent"
+          style={{ '--slider-thumb': accentColor } as Record<string, string>}
           max={safeMax}
           min={scaleMin}
           onChange={(event) => onChange(Number(event.currentTarget.value))}

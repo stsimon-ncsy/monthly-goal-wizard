@@ -61,7 +61,7 @@ body {
   width: 26px;
   border-radius: 999px;
   border: 2px solid #ffffff;
-  background: #0f766e;
+  background: var(--slider-thumb, #0f766e);
   box-shadow: 0 2px 8px rgba(15, 23, 42, 0.25);
   cursor: grab;
 }
@@ -76,7 +76,7 @@ body {
   width: 26px;
   border-radius: 999px;
   border: 2px solid #ffffff;
-  background: #0f766e;
+  background: var(--slider-thumb, #0f766e);
   box-shadow: 0 2px 8px rgba(15, 23, 42, 0.25);
   cursor: grab;
 }
