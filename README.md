@@ -41,8 +41,8 @@ The app ships shared history data from a static asset:
 
 Optional event reference data for the Goals screen:
 - File: `public/data/events.csv`
-- Schema: `region,chapter,year,month,event_name,events,new_teens,avg_attendance,retention_contacts,notes`
-- Example row: `Midwest,Chicago,2025,3,Spring Kickoff,2,18,42,35,Large turnout`
+- Schema: `region,chapter,year,month,event_name,events,teens_total,new_teens,avg_attendance`
+- Example row: `Midwest,Chicago,2025,3,Spring Kickoff,2,84,18,42`
 
 To update shared history:
 1. Replace `public/data/history.csv` with updated data.

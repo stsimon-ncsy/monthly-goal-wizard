@@ -60,7 +60,7 @@ export async function loadEventHistory(): Promise<LastYearEventRow[]> {
   }
 
   const header = parseCsvLine(lines[0]);
-  const expected = ['region', 'chapter', 'year', 'month', 'event_name', 'events', 'new_teens', 'avg_attendance', 'retention_contacts', 'notes'];
+  const expected = ['region', 'chapter', 'year', 'month', 'event_name', 'events', 'teens_total', 'new_teens', 'avg_attendance'];
 
   if (header.join(',') !== expected.join(',')) {
     return [];
@@ -72,7 +72,7 @@ export async function loadEventHistory(): Promise<LastYearEventRow[]> {
     const cols = parseCsvLine(lines[i]);
     if (cols.length !== expected.length) continue;
 
-    const [region, chapter, yearRaw, monthRaw, eventName, eventsRaw, newTeensRaw, avgAttendanceRaw, retentionRaw, notes] = cols;
+    const [region, chapter, yearRaw, monthRaw, eventName, eventsRaw, teensTotalRaw, newTeensRaw, avgAttendanceRaw] = cols;
     const year = Number(yearRaw);
     const month = Number(monthRaw);
 
@@ -87,10 +87,9 @@ export async function loadEventHistory(): Promise<LastYearEventRow[]> {
       month,
       event_name: eventName,
       events: Number(eventsRaw) || 0,
+      teens_total: Number(teensTotalRaw) || 0,
       new_teens: Number(newTeensRaw) || 0,
       avg_attendance: Number(avgAttendanceRaw) || 0,
-      retention_contacts: Number(retentionRaw) || 0,
-      notes,
     });
   }
 

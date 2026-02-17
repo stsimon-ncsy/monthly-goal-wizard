@@ -1,4 +1,4 @@
-﻿import { appConfig } from './config/appConfig';
+import { appConfig } from './config/appConfig';
 
 export type MonthRef = {
   key: string;
@@ -23,10 +23,9 @@ export type LastYearEventRow = {
   month: number;
   event_name: string;
   events: number;
+  teens_total: number;
   new_teens: number;
   avg_attendance: number;
-  retention_contacts: number;
-  notes: string;
 };
 
 export type Variability = 'Consistent' | 'Mixed' | 'Volatile';

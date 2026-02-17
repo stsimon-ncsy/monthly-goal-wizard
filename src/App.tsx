@@ -512,7 +512,7 @@ export default function App() {
                       </span>
                     </div>
                     <p className="mt-1 text-sm text-slate-700">
-                      Events: {event.events} | New Teens: {event.new_teens} | Avg Attendance: {event.avg_attendance} | Retention Contacts: {event.retention_contacts}
+                      Events: {event.events} | # Teens: {event.teens_total} | New Teens: {event.new_teens} | Avg Attendance: {event.avg_attendance}
                     </p>
                   </div>
                 ))}

@@ -96,7 +96,7 @@ console.log(`Metric keys validated: ${Array.from(metricKeys).join(', ')}`);
 const eventsText = readFileSync(eventsCsvPath, 'utf8');
 const eventLines = eventsText.split(/\r?\n/).map((line) => line.trim()).filter(Boolean);
 const eventHeader = parseCsvLine(eventLines[0] || '');
-const expectedEventHeader = ['region', 'chapter', 'year', 'month', 'event_name', 'events', 'new_teens', 'avg_attendance', 'retention_contacts', 'notes'];
+const expectedEventHeader = ['region', 'chapter', 'year', 'month', 'event_name', 'events', 'teens_total', 'new_teens', 'avg_attendance'];
 
 if (eventHeader.join(',') !== expectedEventHeader.join(',')) {
   console.error(`events.csv header mismatch. Expected: ${expectedEventHeader.join(',')} | Received: ${eventHeader.join(',')}`);
@@ -110,7 +110,7 @@ for (let lineNo = 2; lineNo <= eventLines.length; lineNo += 1) {
     continue;
   }
 
-  const [region, _chapter, yearRaw, monthRaw, eventName, eventsRaw, newTeensRaw, avgAttendanceRaw, retentionRaw] = cols;
+  const [region, _chapter, yearRaw, monthRaw, eventName, eventsRaw, teensTotalRaw, newTeensRaw, avgAttendanceRaw] = cols;
   const year = Number(yearRaw);
   const month = Number(monthRaw);
 
@@ -119,9 +119,9 @@ for (let lineNo = 2; lineNo <= eventLines.length; lineNo += 1) {
   if (!Number.isInteger(year)) errors.push(`events.csv line ${lineNo}: year must be an integer.`);
   if (!Number.isInteger(month) || month < 1 || month > 12) errors.push(`events.csv line ${lineNo}: month must be an integer 1-12.`);
   if (Number.isNaN(Number(eventsRaw))) errors.push(`events.csv line ${lineNo}: events must be numeric.`);
+  if (Number.isNaN(Number(teensTotalRaw))) errors.push(`events.csv line ${lineNo}: teens_total must be numeric.`);
   if (Number.isNaN(Number(newTeensRaw))) errors.push(`events.csv line ${lineNo}: new_teens must be numeric.`);
   if (Number.isNaN(Number(avgAttendanceRaw))) errors.push(`events.csv line ${lineNo}: avg_attendance must be numeric.`);
-  if (Number.isNaN(Number(retentionRaw))) errors.push(`events.csv line ${lineNo}: retention_contacts must be numeric.`);
 }
 
 if (errors.length > 0) {
