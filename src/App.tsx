@@ -476,147 +476,148 @@ export default function App() {
             )}
           </div>
 
-          {appConfig.metrics.map((metric) => {
-            const draft = goals[currentMonth.key]?.[metric.key];
-            const stats = computeMetricStats({
-              history,
-              region: identifySnapshot.region,
-              chapter: identifySnapshot.chapter ?? '',
-              metricKey: metric.key,
-              month: currentMonth.month,
-              targetYear: currentMonth.year,
-            });
+          <div className="grid grid-cols-2 gap-3">
+            {appConfig.metrics.map((metric) => {
+              const draft = goals[currentMonth.key]?.[metric.key];
+              const stats = computeMetricStats({
+                history,
+                region: identifySnapshot.region,
+                chapter: identifySnapshot.chapter ?? '',
+                metricKey: metric.key,
+                month: currentMonth.month,
+                targetYear: currentMonth.year,
+              });
 
-            const reasonsOpen = expandedReasons[`${currentMonth.key}:${metric.key}`];
-            const goalValue = draft?.goalValue;
+              const reasonsOpen = expandedReasons[`${currentMonth.key}:${metric.key}`];
+              const goalValue = draft?.goalValue;
 
-            return (
-              <article className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm" key={metric.key}>
-                <div className="flex items-start justify-between gap-2">
-                  <h3 className="text-lg font-semibold text-slate-900">
-                    {metric.label}
-                    <span className="ml-2 cursor-help text-xs text-slate-500" title={metric.description}>
-                      Info
+              return (
+                <article className="rounded-2xl border border-slate-200 bg-white p-3 shadow-sm" key={metric.key}>
+                  <div className="flex items-start justify-between gap-2">
+                    <h3 className="text-base font-semibold leading-tight text-slate-900">
+                      {metric.label}
+                      <span className="ml-1 cursor-help text-[11px] text-slate-500" title={metric.description}>
+                        Info
+                      </span>
+                    </h3>
+                    <span
+                      className={clsx(
+                        'rounded-full px-2 py-1 text-[11px] font-semibold',
+                        stats.variability === 'Consistent' && 'bg-emerald-100 text-emerald-900',
+                        stats.variability === 'Mixed' && 'bg-amber-100 text-amber-900',
+                        stats.variability === 'Volatile' && 'bg-rose-100 text-rose-900',
+                      )}
+                      title={variabilityHint(stats.variability)}
+                    >
+                      {stats.variability}
                     </span>
-                  </h3>
-                  <span
-                    className={clsx(
-                      'rounded-full px-2 py-1 text-xs font-semibold',
-                      stats.variability === 'Consistent' && 'bg-emerald-100 text-emerald-900',
-                      stats.variability === 'Mixed' && 'bg-amber-100 text-amber-900',
-                      stats.variability === 'Volatile' && 'bg-rose-100 text-rose-900',
-                    )}
-                    title={variabilityHint(stats.variability)}
-                  >
-                    {stats.variability}
-                  </span>
-                </div>
+                  </div>
 
-                <div className="mt-3 rounded-xl bg-slate-50 p-3">
-                  {stats.hasHistory ? (
-                    <>
-                      <p className="text-base text-slate-700">
-                        Typical for {currentMonth.label}: avg <strong>{Math.round(stats.avg)}</strong> (range {Math.round(stats.min)}-{Math.round(stats.max)}) from last {stats.countYears} years.
+                  <div className="mt-2 rounded-xl bg-slate-50 p-2.5">
+                    {stats.hasHistory ? (
+                      <p className="text-sm text-slate-700">
+                        Avg <strong>{Math.round(stats.avg)}</strong> | Range {Math.round(stats.min)}-{Math.round(stats.max)} ({stats.countYears}y)
                       </p>
-                    </>
-                  ) : (
-                    <p className="text-base text-slate-700">No history available for this chapter-use your best estimate.</p>
-                  )}
-                </div>
+                    ) : (
+                      <p className="text-sm text-slate-700">No history available for this chapter.</p>
+                    )}
+                  </div>
 
-                <div className="mt-4 flex items-center gap-2">
-                  <button
-                    aria-label={`Decrease ${metric.label}`}
-                    className="h-10 w-10 rounded-lg border border-slate-300 text-lg"
-                    onClick={() => updateGoal(currentMonth.key, metric.key, Math.max(metric.goalMin, (goalValue ?? metric.goalMin) - 1))}
-                    type="button"
-                  >
-                    -
-                  </button>
-                  <input
-                    aria-label={`${metric.label} goal`}
-                    className="h-14 w-32 rounded-lg border border-slate-300 px-3 text-center text-2xl font-semibold"
-                    inputMode="numeric"
-                    pattern="[0-9]*"
-                    value={goalValue ?? ''}
-                    onChange={(event) => {
-                      const value = event.currentTarget.value.trim();
-                      const parsed = Number(value);
-                      updateGoal(currentMonth.key, metric.key, value === '' || Number.isNaN(parsed) ? null : parsed);
-                    }}
-                  />
-                  <button
-                    aria-label={`Increase ${metric.label}`}
-                    className="h-10 w-10 rounded-lg border border-slate-300 text-lg"
-                    onClick={() => updateGoal(currentMonth.key, metric.key, (goalValue ?? metric.goalMin) + 1)}
-                    type="button"
-                  >
-                    +
-                  </button>
-                  {stats.hasHistory && goalValue !== roundGoal(stats.avg) && (
+                  <div className="mt-3 flex flex-wrap items-center gap-2">
                     <button
-                      className="rounded-lg border border-emerald-200 bg-emerald-50 px-3 py-2 text-sm text-emerald-900"
-                      onClick={() => updateGoal(currentMonth.key, metric.key, roundGoal(stats.avg))}
+                      aria-label={`Decrease ${metric.label}`}
+                      className="h-9 w-9 rounded-lg border border-slate-300 text-base"
+                      onClick={() => updateGoal(currentMonth.key, metric.key, Math.max(metric.goalMin, (goalValue ?? metric.goalMin) - 1))}
                       type="button"
                     >
-                      Use avg
+                      -
                     </button>
-                  )}
-                </div>
-                <div className="mt-3 rounded-xl border border-slate-200 bg-white p-3">
-                  <p className="mb-2 text-sm font-semibold uppercase tracking-wide text-slate-700">Drag to set goal</p>
-                  <RangeBar
-                    goalMin={metric.goalMin}
-                    hasHistory={stats.hasHistory}
-                    historyAvg={stats.avg}
-                    historyMax={stats.max}
-                    historyMin={stats.min}
-                    onChange={(next) => updateGoal(currentMonth.key, metric.key, next)}
-                    value={goalValue ?? metric.goalMin}
-                  />
-                </div>
+                    <input
+                      aria-label={`${metric.label} goal`}
+                      className="h-12 w-20 rounded-lg border border-slate-300 px-2 text-center text-xl font-semibold"
+                      inputMode="numeric"
+                      pattern="[0-9]*"
+                      value={goalValue ?? ''}
+                      onChange={(event) => {
+                        const value = event.currentTarget.value.trim();
+                        const parsed = Number(value);
+                        updateGoal(currentMonth.key, metric.key, value === '' || Number.isNaN(parsed) ? null : parsed);
+                      }}
+                    />
+                    <button
+                      aria-label={`Increase ${metric.label}`}
+                      className="h-9 w-9 rounded-lg border border-slate-300 text-base"
+                      onClick={() => updateGoal(currentMonth.key, metric.key, (goalValue ?? metric.goalMin) + 1)}
+                      type="button"
+                    >
+                      +
+                    </button>
+                    {stats.hasHistory && goalValue !== roundGoal(stats.avg) && (
+                      <button
+                        className="rounded-lg border border-emerald-200 bg-emerald-50 px-2 py-1.5 text-xs text-emerald-900"
+                        onClick={() => updateGoal(currentMonth.key, metric.key, roundGoal(stats.avg))}
+                        type="button"
+                      >
+                        Use avg
+                      </button>
+                    )}
+                  </div>
 
-                <div className="mt-4">
-                  <button className="text-sm font-medium text-slate-700 underline" onClick={() => toggleReasons(currentMonth.key, metric.key)} type="button">
-                    + Add reason
-                  </button>
-                  {reasonsOpen && (
-                    <div className="mt-3 space-y-3">
-                      <div className="flex flex-wrap gap-2">
-                        {appConfig.reasonOptions.map((reason) => {
-                          const selected = draft?.reasons?.includes(reason) ?? false;
-                          return (
-                            <button
-                              className={clsx(
-                                'rounded-full border px-3 py-1 text-sm',
-                                selected ? 'border-emerald-500 bg-emerald-100 text-emerald-900' : 'border-slate-300 bg-white text-slate-700',
-                              )}
-                              key={reason}
-                              onClick={() => updateReasons(currentMonth.key, metric.key, reason, !selected)}
-                              type="button"
-                            >
-                              {reason}
-                            </button>
-                          );
-                        })}
+                  <div className="mt-2 rounded-xl border border-slate-200 bg-white p-2.5">
+                    <p className="mb-1.5 text-xs font-semibold uppercase tracking-wide text-slate-700">Drag to set goal</p>
+                    <RangeBar
+                      goalMin={metric.goalMin}
+                      hasHistory={stats.hasHistory}
+                      historyAvg={stats.avg}
+                      historyMax={stats.max}
+                      historyMin={stats.min}
+                      onChange={(next) => updateGoal(currentMonth.key, metric.key, next)}
+                      value={goalValue ?? metric.goalMin}
+                    />
+                  </div>
+
+                  <div className="mt-3">
+                    <button className="text-xs font-medium text-slate-700 underline" onClick={() => toggleReasons(currentMonth.key, metric.key)} type="button">
+                      + Add reason
+                    </button>
+                    {reasonsOpen && (
+                      <div className="mt-2 space-y-2">
+                        <div className="flex flex-wrap gap-1.5">
+                          {appConfig.reasonOptions.map((reason) => {
+                            const selected = draft?.reasons?.includes(reason) ?? false;
+                            return (
+                              <button
+                                className={clsx(
+                                  'rounded-full border px-2 py-1 text-xs',
+                                  selected ? 'border-emerald-500 bg-emerald-100 text-emerald-900' : 'border-slate-300 bg-white text-slate-700',
+                                )}
+                                key={reason}
+                                onClick={() => updateReasons(currentMonth.key, metric.key, reason, !selected)}
+                                type="button"
+                              >
+                                {reason}
+                              </button>
+                            );
+                          })}
+                        </div>
+                        {draft?.reasons?.includes('Other') && (
+                          <label className="block text-xs font-medium text-slate-700">
+                            Other note
+                            <input
+                              className="mt-1 w-full rounded-lg border border-slate-300 px-2 py-1.5 text-sm"
+                              maxLength={120}
+                              value={draft.note}
+                              onChange={(event) => updateNote(currentMonth.key, metric.key, event.currentTarget.value)}
+                            />
+                          </label>
+                        )}
                       </div>
-                      {draft?.reasons?.includes('Other') && (
-                        <label className="block text-sm font-medium text-slate-700">
-                          Other note
-                          <input
-                            className="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2"
-                            maxLength={120}
-                            value={draft.note}
-                            onChange={(event) => updateNote(currentMonth.key, metric.key, event.currentTarget.value)}
-                          />
-                        </label>
-                      )}
-                    </div>
-                  )}
-                </div>
-              </article>
-            );
-          })}
+                    )}
+                  </div>
+                </article>
+              );
+            })}
+          </div>
 
           <div className="sticky bottom-2 flex items-center justify-between rounded-xl border border-slate-200 bg-white p-3 shadow">
             <button
