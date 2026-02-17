@@ -55,7 +55,8 @@ if (historyLines.length < 2) {
 
 const header = parseCsvLine(historyLines[0]);
 const expectedHeader = ['region', 'chapter', 'metric_key', 'year', 'month', 'value'];
-if (header.join(',') !== expectedHeader.join(',')) {
+const normalizedHeader = header.map((h) => h.toLowerCase());
+if (normalizedHeader.join(',') !== expectedHeader.join(',')) {
   console.error(`Header mismatch. Expected: ${expectedHeader.join(',')} | Received: ${header.join(',')}`);
   process.exit(1);
 }
@@ -97,8 +98,9 @@ const eventsText = readFileSync(eventsCsvPath, 'utf8');
 const eventLines = eventsText.split(/\r?\n/).map((line) => line.trim()).filter(Boolean);
 const eventHeader = parseCsvLine(eventLines[0] || '');
 const expectedEventHeader = ['region', 'chapter', 'year', 'month', 'event_name', 'events', 'teens_total', 'new_teens', 'avg_attendance'];
+const normalizedEventHeader = eventHeader.map((h) => h.toLowerCase());
 
-if (eventHeader.join(',') !== expectedEventHeader.join(',')) {
+if (normalizedEventHeader.join(',') !== expectedEventHeader.join(',')) {
   console.error(`events.csv header mismatch. Expected: ${expectedEventHeader.join(',')} | Received: ${eventHeader.join(',')}`);
   process.exit(1);
 }

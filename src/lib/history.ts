@@ -63,7 +63,7 @@ export async function loadHistory(): Promise<HistoryRow[]> {
   const header = parseCsvLine(lines[0]);
   const expected = ['region', 'chapter', 'metric_key', 'year', 'month', 'value'];
 
-  if (header.join(',') !== expected.join(',')) {
+  if (header.map((cell) => cell.toLowerCase()).join(',') !== expected.join(',')) {
     throw new Error(`Unexpected history.csv header. Expected: ${expected.join(',')}`);
   }
 
