@@ -2,9 +2,9 @@
 
 const monthFormatter = new Intl.DateTimeFormat('en-US', { month: 'long', year: 'numeric' });
 
-export function getMonthWindow(twoMonths: boolean): MonthRef[] {
+export function getMonthWindow(twoMonths: boolean, startOffsetMonths = 1): MonthRef[] {
   const now = new Date();
-  const start = new Date(now.getFullYear(), now.getMonth() + 1, 1);
+  const start = new Date(now.getFullYear(), now.getMonth() + startOffsetMonths, 1);
   const months = [start, new Date(start.getFullYear(), start.getMonth() + 1, 1)];
   const chosen = twoMonths ? months : [months[0]];
 

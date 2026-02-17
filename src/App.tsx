@@ -69,7 +69,7 @@ export default function App() {
   const [historyError, setHistoryError] = useState('');
   const [screen, setScreen] = useState<Screen>('welcome');
   const [goalMonthIndex, setGoalMonthIndex] = useState(0);
-  const [months, setMonths] = useState<MonthRef[]>(getMonthWindow(true));
+  const [months, setMonths] = useState<MonthRef[]>(getMonthWindow(true, appConfig.goalWindowStartOffsetMonths));
   const [identifySnapshot, setIdentifySnapshot] = useState<IdentifyFormValues | null>(null);
   const [goals, setGoals] = useState<GoalsByMonth>({});
   const [goalTouched, setGoalTouched] = useState<Record<string, Record<string, boolean>>>({});
@@ -231,7 +231,7 @@ export default function App() {
       return;
     }
 
-    const monthWindow = getMonthWindow(cleaned.windowMode === 'two');
+    const monthWindow = getMonthWindow(cleaned.windowMode === 'two', appConfig.goalWindowStartOffsetMonths);
     const nextDraftKey = buildDraftKey(
       cleaned.region,
       cleaned.chapter ?? '',
