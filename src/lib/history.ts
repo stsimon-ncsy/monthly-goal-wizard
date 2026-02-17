@@ -129,15 +129,22 @@ export function computeMetricStats(input: {
   month: number;
   targetYear: number;
 }): MetricStats {
-  const matching = input.history
+  const rows = input.history
     .filter((row) => row.region === input.region)
     .filter((row) => (input.chapter ? row.chapter === input.chapter : true))
     .filter((row) => row.metric_key === input.metricKey)
     .filter((row) => row.month === input.month)
-    .filter((row) => row.year < input.targetYear)
-    .sort((a, b) => b.year - a.year)
+    .filter((row) => row.year < input.targetYear);
+
+  const totalsByYear = new Map<number, number>();
+  for (const row of rows) {
+    totalsByYear.set(row.year, (totalsByYear.get(row.year) ?? 0) + row.value);
+  }
+
+  const matching = Array.from(totalsByYear.entries())
+    .sort((a, b) => b[0] - a[0])
     .slice(0, 4)
-    .map((row) => row.value);
+    .map(([, total]) => total);
 
   if (matching.length === 0) {
     return {

@@ -497,29 +497,6 @@ export default function App() {
             <p className="mt-1 text-sm text-slate-600">Region: {identifySnapshot.region}{identifySnapshot.chapter ? ` | Chapter: ${identifySnapshot.chapter}` : ''}</p>
           </div>
 
-          <div className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm">
-            <h3 className="text-base font-semibold text-slate-800">{lastYearLabel}</h3>
-            {lastYearEventsForMonth.length === 0 ? (
-              <p className="mt-2 text-base text-slate-600">No event records found for this month last year.</p>
-            ) : (
-              <div className="mt-2 space-y-2">
-                {lastYearEventsForMonth.map((event, index) => (
-                  <div className="rounded-lg border border-slate-200 bg-slate-50 p-3" key={`${event.event_name}-${index}`}>
-                    <div className="flex items-center justify-between gap-2">
-                      <p className="text-base font-semibold text-slate-900">{event.event_name}</p>
-                      <span className="rounded-full bg-slate-200 px-2 py-1 text-xs font-semibold text-slate-700">
-                        {event.events > 1 ? 'Series' : 'Event'}
-                      </span>
-                    </div>
-                    <p className="mt-1 text-sm text-slate-700">
-                      Events: {event.events} | # Teens: {event.teens_total} | New Teens: {event.new_teens} | Avg Attendance: {event.avg_attendance}
-                    </p>
-                  </div>
-                ))}
-              </div>
-            )}
-          </div>
-
           <div className="grid grid-cols-2 gap-3">
             {appConfig.metrics.map((metric) => {
               const draft = goals[currentMonth.key]?.[metric.key];
@@ -669,6 +646,31 @@ export default function App() {
               );
             })}
           </div>
+
+          <details className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm">
+            <summary className="cursor-pointer text-sm font-semibold text-slate-800">
+              Expand this to see last year's {lastYearLabel} events
+            </summary>
+            {lastYearEventsForMonth.length === 0 ? (
+              <p className="mt-3 text-sm text-slate-600">No event records found for this month last year.</p>
+            ) : (
+              <div className="mt-3 space-y-2">
+                {lastYearEventsForMonth.map((event, index) => (
+                  <div className="rounded-lg border border-slate-200 bg-slate-50 p-3" key={`${event.event_name}-${index}`}>
+                    <div className="flex items-center justify-between gap-2">
+                      <p className="text-sm font-semibold text-slate-900">{event.event_name}</p>
+                      <span className="rounded-full bg-slate-200 px-2 py-1 text-xs font-semibold text-slate-700">
+                        {event.events > 1 ? 'Series' : 'Event'}
+                      </span>
+                    </div>
+                    <p className="mt-1 text-xs text-slate-700">
+                      Events: {event.events} | # Teens: {event.teens_total} | New Teens: {event.new_teens} | Avg Attendance: {event.avg_attendance}
+                    </p>
+                  </div>
+                ))}
+              </div>
+            )}
+          </details>
 
           <div className="sticky bottom-2 flex items-center justify-between rounded-xl border border-slate-200 bg-white p-3 shadow">
             <button
