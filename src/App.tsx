@@ -150,7 +150,10 @@ export default function App() {
     if (!currentMonth) return false;
     const monthGoals = goals[currentMonth.key];
     if (!monthGoals) return false;
-    return appConfig.metrics.every((metric) => typeof monthGoals[metric.key]?.goalValue === 'number');
+    return appConfig.metrics.every((metric) => {
+      const value = monthGoals[metric.key]?.goalValue;
+      return Number.isFinite(value) && (value ?? -1) >= metric.goalMin;
+    });
   }, [currentMonth, goals]);
 
   const lastYearEventsForMonth = useMemo(() => {
@@ -307,10 +310,12 @@ export default function App() {
     }
     const outlookUrl = `https://outlook.office.com/mail/deeplink/compose?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
     const mailtoUrl = `mailto:?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
-    const popup = window.open(outlookUrl, '_blank', 'noopener,noreferrer');
-    if (!popup) {
+    const isMobile = /Android|iPhone|iPad|iPod|Mobile/i.test(navigator.userAgent);
+    if (isMobile) {
       window.location.href = mailtoUrl;
+      return;
     }
+    window.location.href = outlookUrl;
   }
 
   function toggleReasons(monthKey: string, metricKey: string): void {
@@ -469,7 +474,6 @@ export default function App() {
                     <p className="mt-1 text-sm text-slate-700">
                       Events: {event.events} | New Teens: {event.new_teens} | Avg Attendance: {event.avg_attendance} | Retention Contacts: {event.retention_contacts}
                     </p>
-                    {event.notes && <p className="mt-1 text-sm text-slate-600">Note: {event.notes}</p>}
                   </div>
                 ))}
               </div>
