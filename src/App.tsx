@@ -105,8 +105,26 @@ export default function App() {
   const selectedRegion = form.watch('region');
   const selectedWindowMode = form.watch('windowMode');
   const selectedChapter = form.watch('chapter');
-  const selectedRegionConfig = appConfig.regions.find((region) => region.name === selectedRegion);
-  const hasChapterList = (selectedRegionConfig?.chapters?.length ?? 0) > 0;
+  const regionsFromHistory = useMemo(() => {
+    const regionMap = new Map<string, Set<string>>();
+    for (const row of history) {
+      const region = row.region.trim();
+      if (!region) continue;
+      if (!regionMap.has(region)) {
+        regionMap.set(region, new Set<string>());
+      }
+      const chapter = row.chapter.trim();
+      if (chapter) {
+        regionMap.get(region)?.add(chapter);
+      }
+    }
+    return Array.from(regionMap.entries())
+      .map(([name, chapters]) => ({ name, chapters: Array.from(chapters).sort((a, b) => a.localeCompare(b)) }))
+      .sort((a, b) => a.name.localeCompare(b.name));
+  }, [history]);
+
+  const selectedRegionConfig = regionsFromHistory.find((region) => region.name === selectedRegion);
+  const hasChapterList = (selectedRegionConfig?.chapters.length ?? 0) > 0;
   const identifyReady = form.formState.isValid && (lockChapter || !hasChapterList || Boolean(selectedChapter));
 
   useEffect(() => {
@@ -287,8 +305,12 @@ export default function App() {
       body = `${submissionBlock.humanOnly}\n\nTech payload omitted in email due to length. Attach the downloaded .txt file.`;
       triggerTextDownload(submissionFilename, submissionBlock.full);
     }
-
-    window.location.href = `mailto:?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
+    const outlookUrl = `https://outlook.office.com/mail/deeplink/compose?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
+    const mailtoUrl = `mailto:?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
+    const popup = window.open(outlookUrl, '_blank', 'noopener,noreferrer');
+    if (!popup) {
+      window.location.href = mailtoUrl;
+    }
   }
 
   function toggleReasons(monthKey: string, metricKey: string): void {
@@ -316,7 +338,7 @@ export default function App() {
       {screen === 'welcome' && (
         <section className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
           <h2 className="text-xl font-semibold text-slate-900">Welcome</h2>
-          <p className="mt-2 text-slate-700">This takes about 2 minutes. You will set goals for 4 key metrics.</p>
+          <p className="mt-2 text-slate-700">This takes about 2 minutes. You will set goals for {appConfig.metrics.length} monthly metrics.</p>
           <button
             className="mt-6 rounded-xl bg-emerald-600 px-5 py-3 font-semibold text-white hover:bg-emerald-700 focus:outline-none focus:ring-2 focus:ring-emerald-500"
             onClick={() => setScreen('identify')}
@@ -342,7 +364,7 @@ export default function App() {
                     {...form.register('region')}
                   >
                     <option value="">Select region</option>
-                    {appConfig.regions.map((region) => (
+                    {regionsFromHistory.map((region) => (
                       <option key={region.name} value={region.name}>
                         {region.name}
                       </option>
@@ -550,7 +572,6 @@ export default function App() {
                     historyMax={stats.max}
                     historyMin={stats.min}
                     onChange={(next) => updateGoal(currentMonth.key, metric.key, next)}
-                    suggestedMax={metric.suggestedMax}
                     value={goalValue ?? metric.goalMin}
                   />
                 </div>

@@ -2,7 +2,6 @@ import clsx from 'clsx';
 
 type Props = {
   goalMin: number;
-  suggestedMax: number;
   value: number;
   onChange: (next: number) => void;
   hasHistory: boolean;
@@ -17,7 +16,6 @@ function clamp(value: number, min: number, max: number): number {
 
 export function RangeBar({
   goalMin,
-  suggestedMax,
   value,
   onChange,
   hasHistory,
@@ -28,7 +26,6 @@ export function RangeBar({
   const historySpan = hasHistory ? Math.max(1, historyMax - historyMin) : 1;
   const scaleMin = hasHistory ? Math.max(goalMin, Math.floor(historyMin - historySpan * 0.35)) : goalMin;
   const scaleMax = Math.max(
-    suggestedMax,
     hasHistory ? Math.ceil(historyMax * 2) : goalMin + 10,
     value + 2,
     goalMin + 5,

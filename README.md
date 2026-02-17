@@ -37,6 +37,7 @@ The app ships shared history data from a static asset:
 - File: `public/data/history.csv`
 - Schema: `region,chapter,metric_key,year,month,value`
 - Example row: `Midwest,Chicago,events,2025,3,7`
+- Region and chapter dropdown options are derived from this file at runtime.
 
 Optional event reference data for the Goals screen:
 - File: `public/data/events.csv`
