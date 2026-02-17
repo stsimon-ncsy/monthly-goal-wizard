@@ -143,6 +143,13 @@ export default function App() {
       .filter((row) => row.year === currentMonth.year - 1 && row.month === currentMonth.month);
   }, [currentMonth, eventHistory, identifySnapshot]);
 
+  const lastYearLabel = useMemo(() => {
+    if (!currentMonth) return '';
+    return new Intl.DateTimeFormat('en-US', { month: 'long', year: 'numeric' }).format(
+      new Date(currentMonth.year - 1, currentMonth.month - 1, 1),
+    );
+  }, [currentMonth]);
+
   function applyIdentify(values: IdentifyFormValues): void {
     const region = lockRegion ? lockedRegion : values.region;
     const chapter = lockChapter ? lockedChapter : values.chapter ?? '';
@@ -424,18 +431,23 @@ export default function App() {
           </div>
 
           <div className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm">
-            <h3 className="text-sm font-semibold uppercase tracking-wide text-slate-700">This month last year</h3>
+            <h3 className="text-base font-semibold text-slate-800">{lastYearLabel}</h3>
             {lastYearEventsForMonth.length === 0 ? (
-              <p className="mt-2 text-sm text-slate-600">No event records found for this month last year.</p>
+              <p className="mt-2 text-base text-slate-600">No event records found for this month last year.</p>
             ) : (
               <div className="mt-2 space-y-2">
                 {lastYearEventsForMonth.map((event, index) => (
                   <div className="rounded-lg border border-slate-200 bg-slate-50 p-3" key={`${event.event_name}-${index}`}>
-                    <p className="font-medium text-slate-900">{event.event_name}</p>
-                    <p className="mt-1 text-xs text-slate-700">
+                    <div className="flex items-center justify-between gap-2">
+                      <p className="text-base font-semibold text-slate-900">{event.event_name}</p>
+                      <span className="rounded-full bg-slate-200 px-2 py-1 text-xs font-semibold text-slate-700">
+                        {event.events > 1 ? 'Series' : 'Event'}
+                      </span>
+                    </div>
+                    <p className="mt-1 text-sm text-slate-700">
                       Events: {event.events} | New Teens: {event.new_teens} | Avg Attendance: {event.avg_attendance} | Retention Contacts: {event.retention_contacts}
                     </p>
-                    {event.notes && <p className="mt-1 text-xs text-slate-600">Note: {event.notes}</p>}
+                    {event.notes && <p className="mt-1 text-sm text-slate-600">Note: {event.notes}</p>}
                   </div>
                 ))}
               </div>
@@ -459,7 +471,7 @@ export default function App() {
             return (
               <article className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm" key={metric.key}>
                 <div className="flex items-start justify-between gap-2">
-                  <h3 className="font-semibold text-slate-900">
+                  <h3 className="text-lg font-semibold text-slate-900">
                     {metric.label}
                     <span className="ml-2 cursor-help text-xs text-slate-500" title={metric.description}>
                       Info
@@ -481,12 +493,12 @@ export default function App() {
                 <div className="mt-3 rounded-xl bg-slate-50 p-3">
                   {stats.hasHistory ? (
                     <>
-                      <p className="text-sm text-slate-700">
+                      <p className="text-base text-slate-700">
                         Typical for {currentMonth.label}: avg <strong>{Math.round(stats.avg)}</strong> (range {Math.round(stats.min)}-{Math.round(stats.max)}) from last {stats.countYears} years.
                       </p>
                     </>
                   ) : (
-                    <p className="text-sm text-slate-700">No history available for this chapter-use your best estimate.</p>
+                    <p className="text-base text-slate-700">No history available for this chapter-use your best estimate.</p>
                   )}
                 </div>
 
@@ -501,7 +513,7 @@ export default function App() {
                   </button>
                   <input
                     aria-label={`${metric.label} goal`}
-                    className="h-12 w-28 rounded-lg border border-slate-300 px-3 text-center text-xl font-semibold"
+                    className="h-14 w-32 rounded-lg border border-slate-300 px-3 text-center text-2xl font-semibold"
                     inputMode="numeric"
                     pattern="[0-9]*"
                     value={goalValue ?? ''}
@@ -530,7 +542,7 @@ export default function App() {
                   )}
                 </div>
                 <div className="mt-3 rounded-xl border border-slate-200 bg-white p-3">
-                  <p className="mb-2 text-xs font-medium uppercase tracking-wide text-slate-600">Drag to set goal</p>
+                  <p className="mb-2 text-sm font-semibold uppercase tracking-wide text-slate-700">Drag to set goal</p>
                   <RangeBar
                     goalMin={metric.goalMin}
                     hasHistory={stats.hasHistory}

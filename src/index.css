@@ -23,12 +23,26 @@ body {
 
 .confetti {
   position: absolute;
-  top: -12px;
-  width: 8px;
-  height: 14px;
-  border-radius: 99px;
-  background: linear-gradient(180deg, #10b981 0%, #0ea5e9 100%);
-  animation: confetti-fall 2.4s linear infinite;
+  top: -8px;
+  width: 10px;
+  height: 10px;
+  border-radius: 2px;
+  background: #10b981;
+  animation: confetti-fall 2.1s ease-in infinite;
+}
+
+.confetti:nth-child(3n) {
+  background: #f59e0b;
+  border-radius: 999px;
+}
+
+.confetti:nth-child(4n) {
+  background: #ef4444;
+}
+
+.confetti:nth-child(5n) {
+  background: #0ea5e9;
+  border-radius: 999px;
 }
 
 .range-slider {
@@ -36,15 +50,15 @@ body {
 }
 
 .range-slider::-webkit-slider-runnable-track {
-  height: 8px;
+  height: 10px;
   background: transparent;
 }
 
 .range-slider::-webkit-slider-thumb {
   appearance: none;
-  margin-top: -6px;
-  height: 20px;
-  width: 20px;
+  margin-top: -8px;
+  height: 26px;
+  width: 26px;
   border-radius: 999px;
   border: 2px solid #ffffff;
   background: #0f766e;
@@ -53,13 +67,13 @@ body {
 }
 
 .range-slider::-moz-range-track {
-  height: 8px;
+  height: 10px;
   background: transparent;
 }
 
 .range-slider::-moz-range-thumb {
-  height: 20px;
-  width: 20px;
+  height: 26px;
+  width: 26px;
   border-radius: 999px;
   border: 2px solid #ffffff;
   background: #0f766e;
@@ -69,14 +83,14 @@ body {
 
 @keyframes confetti-fall {
   0% {
-    transform: translateY(-10px) rotate(0deg);
+    transform: translateY(-8px) translateX(0) rotate(0deg);
     opacity: 0;
   }
-  15% {
+  12% {
     opacity: 1;
   }
   100% {
-    transform: translateY(360px) rotate(280deg);
+    transform: translateY(330px) translateX(16px) rotate(360deg);
     opacity: 0;
   }
 }

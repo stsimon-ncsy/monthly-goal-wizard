@@ -26,10 +26,10 @@ export function RangeBar({
   historyAvg,
 }: Props) {
   const historySpan = hasHistory ? Math.max(1, historyMax - historyMin) : 1;
-  const scaleMin = hasHistory ? Math.max(goalMin, Math.floor(historyMin - historySpan * 0.5)) : goalMin;
+  const scaleMin = hasHistory ? Math.max(goalMin, Math.floor(historyMin - historySpan * 0.35)) : goalMin;
   const scaleMax = Math.max(
     suggestedMax,
-    hasHistory ? Math.ceil(historyMax + historySpan * 0.6) : goalMin + 10,
+    hasHistory ? Math.ceil(historyMax * 2) : goalMin + 10,
     value + 2,
     goalMin + 5,
   );
@@ -44,13 +44,13 @@ export function RangeBar({
   const avgPct = hasHistory ? clamp(toPercent(historyAvg), 0, 100) : 0;
 
   return (
-    <div className="space-y-2">
-      <div className="relative h-9">
-        <div className="absolute left-0 right-0 top-1/2 h-2 -translate-y-1/2 rounded-full bg-slate-200" />
+    <div className="space-y-3">
+      <div className="relative h-12">
+        <div className="absolute left-0 right-0 top-1/2 h-3 -translate-y-1/2 rounded-full bg-slate-200" />
 
         {hasHistory && (
           <div
-            className="absolute top-1/2 h-2 -translate-y-1/2 rounded-full bg-emerald-300/90"
+            className="absolute top-1/2 h-3 -translate-y-1/2 rounded-full bg-emerald-300/90"
             style={{ left: `${historyLeft}%`, width: `${Math.max(2, historyRight - historyLeft)}%` }}
             title={`Historical range: ${Math.round(historyMin)}-${Math.round(historyMax)}`}
           />
@@ -65,7 +65,7 @@ export function RangeBar({
         )}
 
         <div
-          className={clsx('absolute -top-1.5 rounded-md px-1.5 py-0.5 text-[10px] font-semibold text-white', hasHistory ? 'bg-emerald-700' : 'bg-slate-700')}
+          className={clsx('absolute -top-1 rounded-md px-2 py-0.5 text-xs font-semibold text-white', hasHistory ? 'bg-emerald-700' : 'bg-slate-700')}
           style={{ left: `calc(${clamp(currentPct, 4, 96)}% - 13px)` }}
         >
           {safeValue}
@@ -73,7 +73,7 @@ export function RangeBar({
 
         <input
           aria-label="Drag to set goal"
-          className="range-slider absolute left-0 right-0 top-1/2 h-8 -translate-y-1/2 bg-transparent"
+          className="range-slider absolute left-0 right-0 top-1/2 h-10 -translate-y-1/2 bg-transparent"
           max={safeMax}
           min={scaleMin}
           onChange={(event) => onChange(Number(event.currentTarget.value))}
@@ -83,11 +83,7 @@ export function RangeBar({
         />
       </div>
 
-      <div className="flex items-center justify-between text-xs text-slate-600">
-        <span>Planning min {scaleMin}</span>
-        {hasHistory ? <span>History {Math.round(historyMin)}-{Math.round(historyMax)}</span> : <span>No history band</span>}
-        <span>Planning max {safeMax}</span>
-      </div>
+      {hasHistory && <p className="text-sm text-slate-600">Historical band: {Math.round(historyMin)}-{Math.round(historyMax)}</p>}
     </div>
   );
 }
