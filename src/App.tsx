@@ -581,24 +581,25 @@ export default function App() {
                       +
                     </button>
                   </div>
-                  {stats.hasHistory && (
-                    <button
-                      className={clsx(
-                        'mt-2 rounded-lg border px-2 py-1.5 text-xs',
-                        goalValue !== roundGoal(stats.avg)
-                          ? 'border-emerald-200 bg-emerald-50 text-emerald-900'
-                          : 'border-slate-200 bg-slate-100 text-slate-500',
-                      )}
-                      disabled={goalValue === roundGoal(stats.avg)}
-                      onClick={() => updateGoal(currentMonth.key, metric.key, roundGoal(stats.avg))}
-                      type="button"
-                    >
-                      {goalValue === roundGoal(stats.avg) ? 'Using avg' : 'Use avg'}
-                    </button>
-                  )}
-
                   <div className="mt-2 rounded-xl border border-slate-200 bg-white p-2.5">
-                    <p className="mb-1.5 text-xs font-semibold uppercase tracking-wide text-slate-700">Drag to set goal</p>
+                    <div className="mb-1.5 flex items-center justify-between gap-2">
+                      <p className="text-xs font-semibold uppercase tracking-wide text-slate-700">Drag to set goal</p>
+                      {stats.hasHistory && (
+                        <button
+                          className={clsx(
+                            'rounded-lg border px-2 py-1 text-[11px]',
+                            goalValue !== roundGoal(stats.avg)
+                              ? 'border-emerald-200 bg-emerald-50 text-emerald-900'
+                              : 'border-slate-200 bg-slate-100 text-slate-500',
+                          )}
+                          disabled={goalValue === roundGoal(stats.avg)}
+                          onClick={() => updateGoal(currentMonth.key, metric.key, roundGoal(stats.avg))}
+                          type="button"
+                        >
+                          {goalValue === roundGoal(stats.avg) ? 'Using avg' : 'Use avg'}
+                        </button>
+                      )}
+                    </div>
                     <RangeBar
                       goalMin={metric.goalMin}
                       hasHistory={stats.hasHistory}
