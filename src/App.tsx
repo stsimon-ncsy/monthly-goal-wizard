@@ -60,6 +60,7 @@ export default function App() {
   const [identifySnapshot, setIdentifySnapshot] = useState<IdentifyFormValues | null>(null);
   const [goals, setGoals] = useState<GoalsByMonth>({});
   const [expandedReasons, setExpandedReasons] = useState<Record<string, boolean>>({});
+  const [expandedMetricInfo, setExpandedMetricInfo] = useState<Record<string, boolean>>({});
   const [draftKey, setDraftKey] = useState('');
   const [toast, setToast] = useState('');
   const [submissionBlock, setSubmissionBlock] = useState<{ full: string; humanOnly: string; receiptLine: string } | null>(null);
@@ -323,6 +324,11 @@ export default function App() {
     setExpandedReasons((prev) => ({ ...prev, [key]: !prev[key] }));
   }
 
+  function toggleMetricInfo(monthKey: string, metricKey: string): void {
+    const key = `${monthKey}:${metricKey}`;
+    setExpandedMetricInfo((prev) => ({ ...prev, [key]: !prev[key] }));
+  }
+
   function clearCurrentDraft(): void {
     if (!identifySnapshot || !draftKey) return;
     clearDraft(draftKey);
@@ -493,6 +499,7 @@ export default function App() {
               });
 
               const reasonsOpen = expandedReasons[`${currentMonth.key}:${metric.key}`];
+              const infoOpen = expandedMetricInfo[`${currentMonth.key}:${metric.key}`];
               const goalValue = draft?.goalValue;
 
               return (
@@ -500,9 +507,14 @@ export default function App() {
                   <div className="flex items-start justify-between gap-2">
                     <h3 className="text-base font-semibold leading-tight text-slate-900">
                       {metric.label}
-                      <span className="ml-1 cursor-help text-[11px] text-slate-500" title={metric.description}>
-                        Info
-                      </span>
+                      <button
+                        aria-label={`What is ${metric.label}?`}
+                        className="ml-1 inline-flex h-5 w-5 items-center justify-center rounded-full border border-slate-300 text-[11px] font-bold text-slate-600"
+                        onClick={() => toggleMetricInfo(currentMonth.key, metric.key)}
+                        type="button"
+                      >
+                        ?
+                      </button>
                     </h3>
                     <span
                       className={clsx(
@@ -516,6 +528,7 @@ export default function App() {
                       {stats.variability}
                     </span>
                   </div>
+                  {infoOpen && <p className="mt-1 text-xs text-slate-600">{metric.description}</p>}
 
                   <div className="mt-2 rounded-xl bg-slate-50 p-2.5">
                     {stats.hasHistory ? (
@@ -527,7 +540,7 @@ export default function App() {
                     )}
                   </div>
 
-                  <div className="mt-3 flex flex-wrap items-center gap-2">
+                  <div className="mt-3 grid grid-cols-[2.25rem_minmax(0,1fr)_2.25rem] items-center gap-1.5">
                     <button
                       aria-label={`Decrease ${metric.label}`}
                       className="h-9 w-9 rounded-lg border border-slate-300 text-base"
@@ -538,7 +551,7 @@ export default function App() {
                     </button>
                     <input
                       aria-label={`${metric.label} goal`}
-                      className="h-12 w-20 rounded-lg border border-slate-300 px-2 text-center text-xl font-semibold"
+                      className="h-11 w-full min-w-0 rounded-lg border border-slate-300 px-2 text-center text-xl font-semibold"
                       inputMode="numeric"
                       pattern="[0-9]*"
                       value={goalValue ?? ''}
@@ -556,16 +569,16 @@ export default function App() {
                     >
                       +
                     </button>
-                    {stats.hasHistory && goalValue !== roundGoal(stats.avg) && (
-                      <button
-                        className="rounded-lg border border-emerald-200 bg-emerald-50 px-2 py-1.5 text-xs text-emerald-900"
-                        onClick={() => updateGoal(currentMonth.key, metric.key, roundGoal(stats.avg))}
-                        type="button"
-                      >
-                        Use avg
-                      </button>
-                    )}
                   </div>
+                  {stats.hasHistory && goalValue !== roundGoal(stats.avg) && (
+                    <button
+                      className="mt-2 rounded-lg border border-emerald-200 bg-emerald-50 px-2 py-1.5 text-xs text-emerald-900"
+                      onClick={() => updateGoal(currentMonth.key, metric.key, roundGoal(stats.avg))}
+                      type="button"
+                    >
+                      Use avg
+                    </button>
+                  )}
 
                   <div className="mt-2 rounded-xl border border-slate-200 bg-white p-2.5">
                     <p className="mb-1.5 text-xs font-semibold uppercase tracking-wide text-slate-700">Drag to set goal</p>
