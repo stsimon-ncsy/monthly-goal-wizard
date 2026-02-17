@@ -6,11 +6,12 @@ import { z } from 'zod';
 import { v4 as uuidv4 } from 'uuid';
 import { appConfig } from './config/appConfig';
 import { RangeBar } from './components/RangeBar';
+import { loadEventHistory } from './lib/events';
 import { computeMetricStats, loadHistory, roundGoal, variabilityHint } from './lib/history';
 import { buildSubmissionBlock, buildSubmissionFilename, buildSubmissionPayload, triggerTextDownload } from './lib/submission';
 import { buildDraftKey, clearDraft, loadDraft, loadProfile, saveDraft, saveProfile } from './lib/storage';
 import { getMonthWindow } from './lib/date';
-import type { GoalsByMonth, HistoryRow, MonthRef } from './types';
+import type { GoalsByMonth, HistoryRow, LastYearEventRow, MonthRef } from './types';
 
 const identifySchema = z.object({
   region: z.string().min(1, 'Select a region'),
@@ -51,6 +52,7 @@ function defaultGoals(months: MonthRef[], region: string, chapter: string, histo
 export default function App() {
   const profile = useMemo(() => loadProfile(), []);
   const [history, setHistory] = useState<HistoryRow[]>([]);
+  const [eventHistory, setEventHistory] = useState<LastYearEventRow[]>([]);
   const [historyError, setHistoryError] = useState('');
   const [screen, setScreen] = useState<Screen>('welcome');
   const [goalMonthIndex, setGoalMonthIndex] = useState(0);
@@ -71,6 +73,10 @@ export default function App() {
       .catch((error: unknown) => {
         setHistoryError(error instanceof Error ? error.message : 'Unable to load history file.');
       });
+  }, []);
+
+  useEffect(() => {
+    loadEventHistory().then((rows) => setEventHistory(rows));
   }, []);
 
   useEffect(() => {
@@ -128,6 +134,14 @@ export default function App() {
     if (!monthGoals) return false;
     return appConfig.metrics.every((metric) => typeof monthGoals[metric.key]?.goalValue === 'number');
   }, [currentMonth, goals]);
+
+  const lastYearEventsForMonth = useMemo(() => {
+    if (!currentMonth || !identifySnapshot) return [];
+    return eventHistory
+      .filter((row) => row.region === identifySnapshot.region)
+      .filter((row) => (identifySnapshot.chapter ? row.chapter === identifySnapshot.chapter : true))
+      .filter((row) => row.year === currentMonth.year - 1 && row.month === currentMonth.month);
+  }, [currentMonth, eventHistory, identifySnapshot]);
 
   function applyIdentify(values: IdentifyFormValues): void {
     const region = lockRegion ? lockedRegion : values.region;
@@ -407,6 +421,25 @@ export default function App() {
               </button>
             </div>
             <p className="mt-1 text-sm text-slate-600">Region: {identifySnapshot.region}{identifySnapshot.chapter ? ` | Chapter: ${identifySnapshot.chapter}` : ''}</p>
+          </div>
+
+          <div className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm">
+            <h3 className="text-sm font-semibold uppercase tracking-wide text-slate-700">This month last year</h3>
+            {lastYearEventsForMonth.length === 0 ? (
+              <p className="mt-2 text-sm text-slate-600">No event records found for this month last year.</p>
+            ) : (
+              <div className="mt-2 space-y-2">
+                {lastYearEventsForMonth.map((event, index) => (
+                  <div className="rounded-lg border border-slate-200 bg-slate-50 p-3" key={`${event.event_name}-${index}`}>
+                    <p className="font-medium text-slate-900">{event.event_name}</p>
+                    <p className="mt-1 text-xs text-slate-700">
+                      Events: {event.events} | New Teens: {event.new_teens} | Avg Attendance: {event.avg_attendance} | Retention Contacts: {event.retention_contacts}
+                    </p>
+                    {event.notes && <p className="mt-1 text-xs text-slate-600">Note: {event.notes}</p>}
+                  </div>
+                ))}
+              </div>
+            )}
           </div>
 
           {appConfig.metrics.map((metric) => {

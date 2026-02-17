@@ -36,12 +36,19 @@ Notes:
 The app ships shared history data from a static asset:
 - File: `public/data/history.csv`
 - Schema: `region,chapter,metric_key,year,month,value`
+- Example row: `Midwest,Chicago,events,2025,3,7`
+
+Optional event reference data for the Goals screen:
+- File: `public/data/events.csv`
+- Schema: `region,chapter,year,month,event_name,events,new_teens,avg_attendance,retention_contacts,notes`
+- Example row: `Midwest,Chicago,2025,3,Spring Kickoff,2,18,42,35,Large turnout`
 
 To update shared history:
 1. Replace `public/data/history.csv` with updated data.
-2. Run `npm run validate:data`.
-3. Commit and push to `main`.
-4. GitHub Pages redeploys with the new shared data.
+2. Replace `public/data/events.csv` if you want last-year event context shown.
+3. Run `npm run validate:data`.
+4. Commit and push to `main`.
+5. GitHub Pages redeploys with the new shared data.
 
 ## Staff submission flow
 After completing goals, staff can:

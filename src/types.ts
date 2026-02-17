@@ -16,6 +16,19 @@ export type HistoryRow = {
   value: number;
 };
 
+export type LastYearEventRow = {
+  region: string;
+  chapter: string;
+  year: number;
+  month: number;
+  event_name: string;
+  events: number;
+  new_teens: number;
+  avg_attendance: number;
+  retention_contacts: number;
+  notes: string;
+};
+
 export type Variability = 'Consistent' | 'Mixed' | 'Volatile';
 
 export type MetricStats = {
