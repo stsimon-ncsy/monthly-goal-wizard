@@ -35,6 +35,7 @@ export type MetricStats = {
   avg: number;
   min: number;
   max: number;
+  historyValues: number[];
   variability: Variability;
   hasHistory: boolean;
 };

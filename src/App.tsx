@@ -6,6 +6,7 @@ import { z } from 'zod';
 import { v4 as uuidv4 } from 'uuid';
 import { appConfig } from './config/appConfig';
 import { RangeBar } from './components/RangeBar';
+import { Sparkline } from './components/Sparkline';
 import { loadEventHistory } from './lib/events';
 import { computeMetricStats, loadHistory, roundGoal, variabilityHint } from './lib/history';
 import { buildSubmissionBlock, buildSubmissionFilename, buildSubmissionPayload, triggerTextDownload } from './lib/submission';
@@ -354,9 +355,7 @@ export default function App() {
 
     const outlookUrl = `https://outlook.office.com/mail/deeplink/compose?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
     const popup = window.open(outlookUrl, '_blank', 'noopener,noreferrer');
-    if (!popup) {
-      window.location.href = outlookUrl;
-    }
+    if (!popup) setToast('Popup blocked. Please allow popups for email compose.');
   }
 
   function toggleReasons(monthKey: string, metricKey: string): void {
@@ -520,6 +519,13 @@ export default function App() {
               const reasonsOpen = expandedReasons[`${currentMonth.key}:${metric.key}`];
               const infoOpen = expandedMetricInfo[`${currentMonth.key}:${metric.key}`];
               const goalValue = draft?.goalValue;
+              const avgGoal = stats.hasHistory ? roundGoal(stats.avg) : null;
+              const updateGoalWithReasonHint = (next: number | null): void => {
+                updateGoal(currentMonth.key, metric.key, next);
+                if (avgGoal !== null && next !== null && next !== avgGoal) {
+                  setExpandedReasons((prev) => ({ ...prev, [`${currentMonth.key}:${metric.key}`]: true }));
+                }
+              };
 
               return (
                 <article className="rounded-2xl border p-3 shadow-sm" key={metric.key} style={{ backgroundColor: palette.cardBg, borderColor: palette.border }}>
@@ -552,9 +558,15 @@ export default function App() {
 
                   <div className="mt-2 rounded-xl p-2.5" style={{ backgroundColor: palette.panelBg }}>
                     {stats.hasHistory ? (
-                      <p className="text-sm text-slate-700">
-                        Avg <strong>{Math.round(stats.avg)}</strong> | Range {Math.round(stats.min)}-{Math.round(stats.max)} ({stats.countYears}y)
-                      </p>
+                      <div className="flex items-center justify-between gap-2">
+                        <div className="text-sm text-slate-700">
+                          <p>
+                            Avg <strong>{Math.round(stats.avg)}</strong>
+                          </p>
+                          <p>Range of {Math.round(stats.min)}-{Math.round(stats.max)} over the past {stats.countYears} years</p>
+                        </div>
+                        <Sparkline color={palette.accent} values={stats.historyValues} />
+                      </div>
                     ) : (
                       <p className="text-sm text-slate-700">No history available for this chapter.</p>
                     )}
@@ -565,7 +577,7 @@ export default function App() {
                       aria-label={`Decrease ${metric.label}`}
                       className="h-9 w-9 rounded-lg border text-base"
                       style={{ borderColor: palette.border, color: palette.accentStrong }}
-                      onClick={() => updateGoal(currentMonth.key, metric.key, Math.max(metric.goalMin, (goalValue ?? metric.goalMin) - 1))}
+                      onClick={() => updateGoalWithReasonHint(Math.max(metric.goalMin, (goalValue ?? metric.goalMin) - 1))}
                       type="button"
                     >
                       -
@@ -580,14 +592,14 @@ export default function App() {
                       onChange={(event) => {
                         const value = event.currentTarget.value.trim();
                         const parsed = Number(value);
-                        updateGoal(currentMonth.key, metric.key, value === '' || Number.isNaN(parsed) ? null : parsed);
+                        updateGoalWithReasonHint(value === '' || Number.isNaN(parsed) ? null : parsed);
                       }}
                     />
                     <button
                       aria-label={`Increase ${metric.label}`}
                       className="h-9 w-9 rounded-lg border text-base"
                       style={{ borderColor: palette.border, color: palette.accentStrong }}
-                      onClick={() => updateGoal(currentMonth.key, metric.key, (goalValue ?? metric.goalMin) + 1)}
+                      onClick={() => updateGoalWithReasonHint((goalValue ?? metric.goalMin) + 1)}
                       type="button"
                     >
                       +
@@ -606,7 +618,7 @@ export default function App() {
                           )}
                           style={goalValue !== roundGoal(stats.avg) ? { borderColor: palette.accent, backgroundColor: palette.accent } : undefined}
                           disabled={goalValue === roundGoal(stats.avg)}
-                          onClick={() => updateGoal(currentMonth.key, metric.key, roundGoal(stats.avg))}
+                          onClick={() => updateGoalWithReasonHint(roundGoal(stats.avg))}
                           type="button"
                         >
                           {goalValue === roundGoal(stats.avg) ? 'Using avg' : 'Use avg'}
@@ -622,7 +634,7 @@ export default function App() {
                       accentColor={palette.accent}
                       accentSoftColor={palette.accentSoft}
                       accentStrongColor={palette.accentStrong}
-                      onChange={(next) => updateGoal(currentMonth.key, metric.key, next)}
+                      onChange={(next) => updateGoalWithReasonHint(next)}
                       value={goalValue ?? metric.goalMin}
                     />
                   </div>
@@ -687,7 +699,8 @@ export default function App() {
                       </span>
                     </div>
                     <p className="mt-1 text-xs text-slate-700">
-                      Events: {event.events} | # Teens: {event.teens_total} | New Teens: {event.new_teens} | Avg Attendance: {event.avg_attendance}
+                      {event.events > 1 ? `📅 ${event.events} events | ` : ''}
+                      👥 {event.teens_total} teens | 🆕 {event.new_teens} new | 📊 Avg attendance {event.avg_attendance}
                     </p>
                   </div>
                 ))}

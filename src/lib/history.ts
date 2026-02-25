@@ -152,6 +152,7 @@ export function computeMetricStats(input: {
       avg: 0,
       min: 0,
       max: 0,
+      historyValues: [],
       variability: 'Mixed',
       hasHistory: false,
     };
@@ -164,6 +165,7 @@ export function computeMetricStats(input: {
     avg,
     min: Math.min(...matching),
     max: Math.max(...matching),
+    historyValues: [...matching].reverse(),
     variability: getVariability(matching),
     hasHistory: true,
   };
