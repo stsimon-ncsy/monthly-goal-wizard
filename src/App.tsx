@@ -11,14 +11,13 @@ import { loadEventHistory } from './lib/events';
 import { computeMetricStats, loadHistory, roundGoal, variabilityHint } from './lib/history';
 import { buildSubmissionBlock, buildSubmissionFilename, buildSubmissionPayload, triggerTextDownload } from './lib/submission';
 import { buildDraftKey, clearDraft, loadDraft, loadProfile, saveDraft, saveProfile } from './lib/storage';
-import { getMonthWindow } from './lib/date';
+import { getFixedMonthWindow, getMonthWindow } from './lib/date';
 import type { GoalsByMonth, HistoryRow, LastYearEventRow, MonthRef } from './types';
 
 const identifySchema = z.object({
   region: z.string().min(1, 'Select a region'),
   chapter: z.string().optional(),
   staffName: z.string().min(2, 'Enter your name'),
-  windowMode: z.enum(['one', 'two']),
 });
 
 type IdentifyFormValues = z.infer<typeof identifySchema>;
@@ -70,6 +69,13 @@ function defaultTouched(months: MonthRef[]): Record<string, Record<string, boole
   return output;
 }
 
+function getConfiguredMonthWindow(): MonthRef[] {
+  if (appConfig.fixedGoalWindow) {
+    return getFixedMonthWindow(appConfig.fixedGoalWindow.year, appConfig.fixedGoalWindow.months);
+  }
+  return getMonthWindow(true, appConfig.goalWindowStartOffsetMonths);
+}
+
 export default function App() {
   const profile = useMemo(() => loadProfile(), []);
   const [history, setHistory] = useState<HistoryRow[]>([]);
@@ -77,7 +83,7 @@ export default function App() {
   const [historyError, setHistoryError] = useState('');
   const [screen, setScreen] = useState<Screen>('welcome');
   const [goalMonthIndex, setGoalMonthIndex] = useState(0);
-  const [months, setMonths] = useState<MonthRef[]>(getMonthWindow(true, appConfig.goalWindowStartOffsetMonths));
+  const [months, setMonths] = useState<MonthRef[]>(getConfiguredMonthWindow());
   const [identifySnapshot, setIdentifySnapshot] = useState<IdentifyFormValues | null>(null);
   const [goals, setGoals] = useState<GoalsByMonth>({});
   const [goalTouched, setGoalTouched] = useState<Record<string, Record<string, boolean>>>({});
@@ -119,12 +125,10 @@ export default function App() {
       region: lockedRegion || profile.lastRegion || '',
       chapter: lockedChapter || profile.lastChapter || '',
       staffName: profile.staffName || '',
-      windowMode: 'two',
     },
   });
 
   const selectedRegion = form.watch('region');
-  const selectedWindowMode = form.watch('windowMode');
   const selectedChapter = form.watch('chapter');
   const regionsFromHistory = useMemo(() => {
     const regionMap = new Map<string, Set<string>>();
@@ -205,6 +209,23 @@ export default function App() {
     );
   }, [currentMonth]);
 
+  function isSeriesEvent(event: LastYearEventRow): boolean {
+    return event.seriesOrEvent.trim().toLowerCase() === 'series' || event.events > 1;
+  }
+
+  function buildIceburgLink(event: LastYearEventRow): string {
+    if (isSeriesEvent(event)) {
+      const seriesId = event.seriesID || event.eventID;
+      if (seriesId) {
+        return `https://iceburg.ncsy.org/events/series/${encodeURIComponent(seriesId)}/summary`;
+      }
+    }
+    if (event.eventID) {
+      return `https://iceburg.ncsy.org/events/${encodeURIComponent(event.eventID)}`;
+    }
+    return '';
+  }
+
   const reviewSubmission = useMemo(() => {
     if (!identifySnapshot) return null;
     const createdAt = new Date();
@@ -231,7 +252,6 @@ export default function App() {
       region,
       chapter,
       staffName: values.staffName.trim(),
-      windowMode: values.windowMode,
     };
 
     if (hasChapterList && !chapter) {
@@ -239,7 +259,7 @@ export default function App() {
       return;
     }
 
-    const monthWindow = getMonthWindow(cleaned.windowMode === 'two', appConfig.goalWindowStartOffsetMonths);
+    const monthWindow = getConfiguredMonthWindow();
     const nextDraftKey = buildDraftKey(
       cleaned.region,
       cleaned.chapter ?? '',
@@ -461,19 +481,9 @@ export default function App() {
               <span className="text-xs text-rose-600">{form.formState.errors.staffName?.message}</span>
             </label>
 
-            <fieldset>
-              <legend className="text-sm font-medium text-slate-700">Month window</legend>
-              <div className="mt-2 grid gap-2 sm:grid-cols-2">
-                <label className={clsx('rounded-lg border px-3 py-2', selectedWindowMode === 'one' ? 'border-emerald-500 bg-emerald-50' : 'border-slate-300')}>
-                  <input className="mr-2" type="radio" value="one" {...form.register('windowMode')} />
-                  Just upcoming month
-                </label>
-                <label className={clsx('rounded-lg border px-3 py-2', selectedWindowMode === 'two' ? 'border-emerald-500 bg-emerald-50' : 'border-slate-300')}>
-                  <input className="mr-2" type="radio" value="two" {...form.register('windowMode')} />
-                  Two months (default)
-                </label>
-              </div>
-            </fieldset>
+            <p className="rounded-lg border border-sky-200 bg-sky-50 px-3 py-2 text-sm text-sky-900">
+              Goal window is set to: {getConfiguredMonthWindow().map((month) => month.label).join(' and ')}.
+            </p>
 
             <div className="sticky bottom-2 flex items-center justify-between rounded-xl border border-slate-200 bg-white p-3 shadow">
               <button className="rounded-lg px-4 py-2 text-slate-700" onClick={() => setScreen('welcome')} type="button">
@@ -693,13 +703,23 @@ export default function App() {
                 {lastYearEventsForMonth.map((event, index) => (
                   <div className="rounded-lg border border-slate-200 bg-slate-50 p-3" key={`${event.event_name}-${index}`}>
                     <div className="flex items-center justify-between gap-2">
-                      <p className="text-sm font-semibold text-slate-900">{event.event_name}</p>
+                      {buildIceburgLink(event) ? (
+                        <a
+                          className="text-sm font-semibold text-slate-900 underline decoration-slate-300 underline-offset-2 hover:decoration-slate-700"
+                          href={buildIceburgLink(event)}
+                          rel="noopener noreferrer"
+                          target="_blank"
+                        >
+                          {event.event_name}
+                        </a>
+                      ) : (
+                        <p className="text-sm font-semibold text-slate-900">{event.event_name}</p>
+                      )}
                       <span className="rounded-full bg-slate-200 px-2 py-1 text-xs font-semibold text-slate-700">
-                        {event.events > 1 ? 'Series' : 'Event'}
+                        {isSeriesEvent(event) ? `Series (${event.events})` : 'Event'}
                       </span>
                     </div>
                     <p className="mt-1 text-xs text-slate-700">
-                      {event.events > 1 ? `📅 ${event.events} events | ` : ''}
                       👥 {event.teens_total} teens | 🆕 {event.new_teens} new | 📊 Avg attendance {event.avg_attendance}
                     </p>
                   </div>

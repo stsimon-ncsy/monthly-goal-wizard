@@ -97,29 +97,73 @@ console.log(`Metric keys validated: ${Array.from(metricKeys).join(', ')}`);
 const eventsText = readFileSync(eventsCsvPath, 'utf8');
 const eventLines = eventsText.split(/\r?\n/).map((line) => line.trim()).filter(Boolean);
 const eventHeader = parseCsvLine(eventLines[0] || '');
-const expectedEventHeader = ['region', 'chapter', 'year', 'month', 'event_name', 'events', 'teens_total', 'new_teens', 'avg_attendance'];
-const normalizedEventHeader = eventHeader.map((h) => h.toLowerCase());
+const eventHeaderMap = new Map(eventHeader.map((column, index) => [column.trim().toLowerCase(), index]));
 
-if (normalizedEventHeader.join(',') !== expectedEventHeader.join(',')) {
-  console.error(`events.csv header mismatch. Expected: ${expectedEventHeader.join(',')} | Received: ${eventHeader.join(',')}`);
+const regionIdx = eventHeaderMap.get('region') ?? eventHeaderMap.get('regionname');
+const chapterIdx = eventHeaderMap.get('chapter') ?? eventHeaderMap.get('chaptername');
+const yearIdx = eventHeaderMap.get('year');
+const monthIdx = eventHeaderMap.get('month');
+const eventNameIdx = eventHeaderMap.get('event_name');
+const seriesOrEventIdx = eventHeaderMap.get('seriesorevent');
+const eventIdIdx = eventHeaderMap.get('eventid');
+const seriesIdIdx = eventHeaderMap.get('seriesid');
+const eventsIdx = eventHeaderMap.get('events');
+const teensTotalIdx = eventHeaderMap.get('teens_total');
+const newTeensIdx = eventHeaderMap.get('new_teens');
+const avgAttendanceIdx = eventHeaderMap.get('avg_attendance');
+
+const missingEventColumns = [
+  ['region or regionName', regionIdx],
+  ['chapter or chapterName', chapterIdx],
+  ['year', yearIdx],
+  ['month', monthIdx],
+  ['event_name', eventNameIdx],
+  ['events', eventsIdx],
+  ['teens_total', teensTotalIdx],
+  ['new_teens', newTeensIdx],
+  ['avg_attendance', avgAttendanceIdx],
+].filter(([, index]) => index === undefined);
+
+if (missingEventColumns.length > 0) {
+  console.error(
+    `events.csv header mismatch. Missing columns: ${missingEventColumns.map(([name]) => name).join(', ')} | Received: ${eventHeader.join(',')}`,
+  );
   process.exit(1);
 }
 
 for (let lineNo = 2; lineNo <= eventLines.length; lineNo += 1) {
   const cols = parseCsvLine(eventLines[lineNo - 1]);
-  if (cols.length !== expectedEventHeader.length) {
-    errors.push(`events.csv line ${lineNo}: expected ${expectedEventHeader.length} columns, got ${cols.length}.`);
-    continue;
-  }
+  const region = (cols[regionIdx] ?? '').trim();
+  const yearRaw = (cols[yearIdx] ?? '').trim();
+  const monthRaw = (cols[monthIdx] ?? '').trim();
+  const eventName = (cols[eventNameIdx] ?? '').trim();
+  const seriesOrEventRaw = (cols[seriesOrEventIdx ?? -1] ?? '').trim();
+  const eventIDRaw = (cols[eventIdIdx ?? -1] ?? '').trim();
+  const seriesIDRaw = (cols[seriesIdIdx ?? -1] ?? '').trim();
+  const eventsRaw = (cols[eventsIdx] ?? '').trim();
+  const teensTotalRaw = (cols[teensTotalIdx] ?? '').trim();
+  const newTeensRaw = (cols[newTeensIdx] ?? '').trim();
+  const avgAttendanceRaw = (cols[avgAttendanceIdx] ?? '').trim();
 
-  const [region, _chapter, yearRaw, monthRaw, eventName, eventsRaw, teensTotalRaw, newTeensRaw, avgAttendanceRaw] = cols;
   const year = Number(yearRaw);
   const month = Number(monthRaw);
+  const seriesOrEvent = String(seriesOrEventRaw || '').trim().toLowerCase();
 
   if (!region) errors.push(`events.csv line ${lineNo}: region is required.`);
   if (!eventName) errors.push(`events.csv line ${lineNo}: event_name is required.`);
   if (!Number.isInteger(year)) errors.push(`events.csv line ${lineNo}: year must be an integer.`);
   if (!Number.isInteger(month) || month < 1 || month > 12) errors.push(`events.csv line ${lineNo}: month must be an integer 1-12.`);
+  if (seriesOrEventIdx !== undefined) {
+    if (!seriesOrEvent || (seriesOrEvent !== 'series' && seriesOrEvent !== 'event')) {
+      errors.push(`events.csv line ${lineNo}: seriesOrEvent must be 'Series' or 'Event'.`);
+    }
+    if (seriesOrEvent === 'series' && !seriesIDRaw && !eventIDRaw) {
+      errors.push(`events.csv line ${lineNo}: series rows require seriesID (or eventID fallback).`);
+    }
+    if (seriesOrEvent === 'event' && !eventIDRaw) {
+      errors.push(`events.csv line ${lineNo}: eventID is required when seriesOrEvent is Event.`);
+    }
+  }
   if (Number.isNaN(Number(eventsRaw))) errors.push(`events.csv line ${lineNo}: events must be numeric.`);
   if (Number.isNaN(Number(teensTotalRaw))) errors.push(`events.csv line ${lineNo}: teens_total must be numeric.`);
   if (Number.isNaN(Number(newTeensRaw))) errors.push(`events.csv line ${lineNo}: new_teens must be numeric.`);

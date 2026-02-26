@@ -9,6 +9,10 @@ export type MetricConfig = {
 export const appConfig = {
   appVersion: '1.0.0',
   goalWindowStartOffsetMonths: 0,
+  fixedGoalWindow: {
+    year: 2026,
+    months: [2, 3],
+  },
   metrics: [
     {
       key: 'events',
@@ -19,7 +23,7 @@ export const appConfig = {
     },
     {
       key: 'new_teens',
-      label: 'New Teens this Year',
+      label: 'New Teens',
       description: 'Teens attending for the first time this year.',
       unitLabel: 'new teens',
       goalMin: 0,

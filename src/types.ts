@@ -22,6 +22,9 @@ export type LastYearEventRow = {
   year: number;
   month: number;
   event_name: string;
+  seriesOrEvent: string;
+  eventID: string;
+  seriesID: string;
   events: number;
   teens_total: number;
   new_teens: number;

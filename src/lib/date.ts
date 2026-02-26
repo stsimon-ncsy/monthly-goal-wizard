@@ -16,6 +16,18 @@ export function getMonthWindow(twoMonths: boolean, startOffsetMonths = 1): Month
   }));
 }
 
+export function getFixedMonthWindow(year: number, months: readonly number[]): MonthRef[] {
+  return months.map((month) => {
+    const date = new Date(year, month - 1, 1);
+    return {
+      key: toMonthKey(date.getFullYear(), date.getMonth() + 1),
+      year: date.getFullYear(),
+      month: date.getMonth() + 1,
+      label: monthFormatter.format(date),
+    };
+  });
+}
+
 export function toMonthKey(year: number, month: number): string {
   return `${year}-${String(month).padStart(2, '0')}`;
 }
