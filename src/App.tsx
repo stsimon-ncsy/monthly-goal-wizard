@@ -368,17 +368,18 @@ export default function App() {
   function onEmailSubmission(): void {
     if (!reviewSubmission || !identifySnapshot) return;
 
+    const recipient = 'simons+mg@ncsy.org';
     const subject = `Monthly Goals ${months.map((month) => month.key).join(', ')} – ${identifySnapshot.staffName} (${identifySnapshot.region})`;
     const body = reviewSubmission.block.full;
     const isMobile = /Android|iPhone|iPad|iPod|Mobile/i.test(navigator.userAgent);
 
     if (isMobile) {
-      const mailtoUrl = `mailto:?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
+      const mailtoUrl = `mailto:${encodeURIComponent(recipient)}?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
       window.location.href = mailtoUrl;
       return;
     }
 
-    const outlookUrl = `https://outlook.office.com/mail/deeplink/compose?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
+    const outlookUrl = `https://outlook.office.com/mail/deeplink/compose?to=${encodeURIComponent(recipient)}&subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
     const popup = window.open(outlookUrl, '_blank', 'noopener,noreferrer');
     if (!popup) setToast('Popup blocked. Please allow popups for email compose.');
   }
