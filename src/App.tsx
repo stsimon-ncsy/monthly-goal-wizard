@@ -112,6 +112,11 @@ export default function App() {
     return () => window.clearTimeout(timeout);
   }, [toast]);
 
+  useEffect(() => {
+    if (screen !== 'goals') return;
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  }, [goalMonthIndex, screen]);
+
   const hashParams = useMemo(() => new URLSearchParams(window.location.hash.split('?')[1] ?? ''), []);
   const lockedRegion = (hashParams.get('region') ?? '').trim();
   const lockedChapter = (hashParams.get('chapter') ?? '').trim();
@@ -503,14 +508,20 @@ export default function App() {
 
       {screen === 'goals' && currentMonth && identifySnapshot && (
         <section className="space-y-4">
-          <div className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm sm:p-5">
-            <div className="flex items-center justify-between">
-              <h2 className="text-lg font-semibold text-slate-900">Goals for {currentMonth.label}</h2>
+          <div className="rounded-2xl border-2 border-emerald-300 bg-gradient-to-r from-emerald-50 via-cyan-50 to-sky-50 p-4 shadow-sm sm:p-5">
+            <div className="flex items-start justify-between gap-3">
+              <div>
+                <p className="text-xs font-semibold uppercase tracking-wider text-emerald-800">Now setting goals for</p>
+                <h2 className="text-3xl font-extrabold leading-tight text-slate-900 sm:text-4xl">{currentMonth.label}</h2>
+                <p className="mt-1 text-sm font-medium text-slate-700">
+                  Month {goalMonthIndex + 1} of {months.length}
+                </p>
+              </div>
               <button className="text-sm text-slate-500 underline" onClick={clearCurrentDraft} type="button">
                 Clear draft
               </button>
             </div>
-            <p className="mt-1 text-sm text-slate-600">Region: {identifySnapshot.region}{identifySnapshot.chapter ? ` | Chapter: ${identifySnapshot.chapter}` : ''}</p>
+            <p className="mt-2 text-sm text-slate-700">Region: {identifySnapshot.region}{identifySnapshot.chapter ? ` | Chapter: ${identifySnapshot.chapter}` : ''}</p>
           </div>
 
           <div className="grid grid-cols-2 gap-3">

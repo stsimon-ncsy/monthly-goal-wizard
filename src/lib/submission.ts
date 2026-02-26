@@ -73,7 +73,7 @@ export function buildSubmissionBlock(input: {
 
   const humanOnly = lines.join('\n').trimEnd();
 
-  const full = `${humanOnly}\n\n---TECH (do not edit)---\n${JSON.stringify(payload, null, 2)}`;
+  const full = humanOnly;
 
   const chapterForReceipt = payload.chapter || '(No chapter)';
   const receiptLine = `Goals submitted: ${payload.months.join(', ')} | ${payload.region} | ${chapterForReceipt} | ${payload.staff} | 4 metrics`;
