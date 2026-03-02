@@ -11,7 +11,7 @@ export const appConfig = {
   goalWindowStartOffsetMonths: 0,
   fixedGoalWindow: {
     year: 2026,
-    months: [2, 3],
+    months: [3, 4],
   },
   metrics: [
     {
