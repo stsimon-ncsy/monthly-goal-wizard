@@ -31,7 +31,7 @@ export const appConfig = {
     {
       key: 'reach',
       label: 'Reach',
-      description: 'Average participants per event during the month.',
+      description: 'Total unique participants this month.',
       unitLabel: 'participants',
       goalMin: 0,
     },
